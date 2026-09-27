@@ -152,7 +152,7 @@
                         <span id="lblUserDisplay" class="font-bold text-slate-700">Tên Nhân Viên</span>
                     </div>
 
-                    <button onclick="openModalCaiDatTaiKhoan()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-3 py-1.5 rounded-lg border border-sky-200 transition flex items-center" title="Thông Tin Tài Khoản">
+                    <button type="button" onclick="openModalCaiDatTaiKhoan()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-3 py-1.5 rounded-lg border border-sky-200 transition flex items-center" title="Thông Tin Tài Khoản">
                         <i class="fa-solid fa-user-gear mr-1.5"></i> Thông Tin Tài Khoản
                     </button>
 
@@ -229,7 +229,7 @@
                     </form>
                 </section>
 
-                <!-- QUẢN LÝ DANH MỤC DROPDOWN - CHỈ ADMIN -->
+                <!-- QUẢN LÝ DANH MỤC DROPDOWN - CHỦ SỞ HỮU + QUẢN TRỊ -->
                 <section id="adminDanhMucSetting" class="hidden space-y-3">
                     <div class="flex items-center gap-2 text-slate-700 font-bold uppercase border-b pb-2">
                         <i class="fa-solid fa-list-check text-emerald-600"></i>
@@ -238,7 +238,7 @@
                     <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4">
                         <div>
                             <div class="font-bold text-emerald-800">Danh mục dùng cho các ô chọn</div>
-                            <div class="text-slate-500 font-normal mt-1">Admin được phép thêm, sửa, xóa Team, Thương hiệu, ĐVT, Chức vụ, Phòng ban, Trạng thái duyệt và các danh mục khác.</div>
+                            <div class="text-slate-500 font-normal mt-1">Chủ Sở Hữu và Quản Trị được phép thêm, sửa, xóa Team, Thương hiệu, ĐVT, Chức vụ, Phòng ban, Trạng thái duyệt, Hình thức nhận hàng và các danh mục khác.</div>
                         </div>
                         <button type="button" onclick="openQuanLyDanhMucFromSettings()" class="shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 shadow flex items-center">
                             <i class="fa-solid fa-list-check mr-1.5"></i> Quản Lý Danh Mục
@@ -758,7 +758,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
     <!-- JAVASCRIPT SYSTEM LOGIC -->
     <script>
@@ -796,6 +796,10 @@
                 ]
             }
         ];
+        danhMucTabs.push({ id: 'tab_HTNH', name: 'Hình Thức Nhận Hàng', prefix: 'HTNH', items: [
+            { id: 'HTNH01', ma: 'HTNH01', ten: 'Nhận tại kho', ghiChu: 'Hình thức nhận mặc định' },
+            { id: 'HTNH02', ma: 'HTNH02', ten: 'Nhận tại cảng', ghiChu: 'Hình thức nhận mặc định' }
+        ]});
         if (!danhMucTabs.some(t => t.name === 'Phân Quyền')) {
             danhMucTabs.push({ id: 'tab_PQ', name: 'Phân Quyền', prefix: 'PQ', items: [
                 { id: 'PQ01', ma: 'PQ01', ten: 'Thành Viên', ghiChu: '' },
@@ -1094,9 +1098,9 @@
 
                                 <div class="relative">
                                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                                    <input type="text" id="filterDXSearch" oninput="filterDeXuatTable()" placeholder="Số phiếu, người lập, trạng thái..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-sky-500 w-64">
+                                    <input type="text" id="filterDXSearch" oninput="filterDeXuatTable()" placeholder="Tìm phiếu, người lập, team, sản phẩm, hình thức nhận..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-sky-500 w-64">
                                 </div>
-                                <button onclick="openModalAddDeXuat()" class="bg-sky-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-sky-700 shadow transition flex items-center">
+                                <button type="button" onclick="openModalAddDeXuat()" class="bg-sky-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-sky-700 shadow transition flex items-center">
                                     <i class="fa-solid fa-plus-circle mr-1.5"></i> Lập Phiếu
                                 </button>
                             </div>
@@ -1145,11 +1149,11 @@
             let filtered = sorted.filter(p => {
                 let matchDate = (!startDate || p.ngayLap >= startDate) && (!endDate || p.ngayLap <= endDate);
                 let sttStr = calcTrangThaiPhieu(p).toLowerCase();
-                let matchSearch = !searchKey || 
-                    p.ma.toLowerCase().includes(searchKey) || 
-                    p.nguoiLap.toLowerCase().includes(searchKey) ||
-                    sttStr.includes(searchKey) ||
-                    (p.ghiChu && p.ghiChu.toLowerCase().includes(searchKey));
+                const searchHay = [
+                    p.ma, p.nguoiLap, p.teamDeXuat, p.ngayLap, sttStr, p.ghiChu,
+                    ...(p.items||[]).flatMap(i=>[i.ma,i.ten,i.thuongHieu,i.dvt,i.ngayNhan,i.trangThaiItem,i.sl])
+                ].join(' ');
+                let matchSearch = !searchKey || window.qldhSmartIncludes(searchHay, searchKey);
 
                 return matchDate && matchSearch;
             });
@@ -1181,8 +1185,8 @@
                         <td class="p-2.5 border-r text-center">${getTrangThaiBadge(trangThaiText)}</td>
                         <td class="p-2.5 border-r text-slate-500">${p.ghiChu || '-'}</td>
                         <td class="p-2.5 text-center space-x-2">
-                            <button onclick="openModalViewDeXuat('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
-                            <button onclick="openModalEditDeXuat('${p.id}')" class="text-sky-600 hover:text-sky-800" title="Điều chỉnh"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button type="button" onclick="openModalViewDeXuat('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" onclick="openModalEditDeXuat('${p.id}')" class="text-sky-600 hover:text-sky-800" title="Điều chỉnh"><i class="fa-solid fa-pen-to-square"></i></button>
                             ${isAdmin ? `<button onclick="handleDeleteDeXuat('${p.id}')" class="text-rose-600 hover:text-rose-800" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </td>
                     </tr>
@@ -1334,11 +1338,11 @@
             }
 
             tbody.innerHTML = filtered.map(sp => {
-                let isSelected = currentDetailDXItems.some(i => i.ma === sp.ma);
+                const existingCount = currentDetailDXItems.filter(i => i.ma === sp.ma).length;
                 return `
                     <tr class="border-b hover:bg-slate-50">
                         <td class="p-2 border-r text-center">
-                            <input type="checkbox" value="${sp.ma}" class="chkSpModalItem w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 cursor-pointer" ${isSelected ? 'checked' : ''}>
+                            <input type="checkbox" value="${sp.ma}" class="chkSpModalItem w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 cursor-pointer">
                         </td>
                         <td class="p-2 border-r font-mono font-bold text-purple-700">${sp.ma}</td>
                         <td class="p-2 border-r text-slate-600">${sp.thuongHieu || '-'}</td>
@@ -1712,10 +1716,10 @@
 
                                 <div class="relative">
                                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                                    <input type="text" id="filterDDXSearch" oninput="filterDuyetDeXuatTable()" placeholder="Số phiếu duyệt, đề xuất, người duyệt..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 w-64">
+                                    <input type="text" id="filterDDXSearch" oninput="filterDuyetDeXuatTable()" placeholder="Tìm phiếu, người duyệt, team, sản phẩm, hình thức nhận..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500 w-64">
                                 </div>
                                 ${isAdmin ? `
-                                    <button onclick="openModalSelectDXToDuyet()" class="bg-emerald-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow transition flex items-center">
+                                    <button type="button" onclick="openModalSelectDXToDuyet()" class="bg-emerald-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow transition flex items-center">
                                         <i class="fa-solid fa-square-check mr-1.5"></i> Lập Phiếu Duyệt
                                     </button>
                                 ` : ''}
@@ -1763,12 +1767,12 @@
 
             let filtered = sorted.filter(p => {
                 let matchDate = (!startDate || p.ngayDuyet >= startDate) && (!endDate || p.ngayDuyet <= endDate);
-                let matchSearch = !searchKey || 
-                    p.ma.toLowerCase().includes(searchKey) || 
-                    p.phieuDeXuatMa.toLowerCase().includes(searchKey) ||
-                    p.nguoiDuyet.toLowerCase().includes(searchKey) ||
-                    p.trangThaiDatHang.toLowerCase().includes(searchKey) ||
-                    (p.ghiChu && p.ghiChu.toLowerCase().includes(searchKey));
+                const searchHay = [
+                    p.ma, p.phieuDeXuatMa, p.nguoiDuyet, p.teamDeXuat, p.ngayDuyet,
+                    p.trangThaiDatHang, p.ghiChu,
+                    ...(p.items||[]).flatMap(i=>[i.ma,i.ten,i.thuongHieu,i.dvt,i.slDuyet,i.trangThaiItem])
+                ].join(' ');
+                let matchSearch = !searchKey || window.qldhSmartIncludes(searchHay, searchKey);
 
                 return matchDate && matchSearch;
             });
@@ -1802,10 +1806,10 @@
                         </td>
                         <td class="p-2.5 border-r text-slate-500">${p.ghiChu || '-'}</td>
                         <td class="p-2.5 text-center space-x-2">
-                            <button onclick="openModalViewDuyetDeXuat('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem phiếu"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" onclick="openModalViewDuyetDeXuat('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem phiếu"><i class="fa-solid fa-eye"></i></button>
                             ${!isDaDat ? `
-                                ${isAdmin ? `<button onclick="openModalEditDuyetDeXuat('${p.id}')" class="text-sky-600 hover:text-sky-800" title="Điều chỉnh"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
-                                <button onclick="openModalDatHangFromDDX('${p.id}')" class="text-indigo-600 hover:text-indigo-800" title="Lập phiếu đặt hàng"><i class="fa-solid fa-cart-plus"></i></button>
+                                ${isAdmin ? `<button type="button" onclick="openModalEditDuyetDeXuat('${p.id}')" class="text-sky-600 hover:text-sky-800" title="Điều chỉnh"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
+                                <button type="button" onclick="openModalDatHangFromDDX('${p.id}')" class="text-indigo-600 hover:text-indigo-800" title="Lập phiếu đặt hàng"><i class="fa-solid fa-cart-plus"></i></button>
                             ` : ''}
                         </td>
                     </tr>
@@ -1946,9 +1950,9 @@
 
                                 <div class="relative">
                                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                                    <input type="text" id="filterDHSearch" oninput="filterDatHangTable()" placeholder="Mã phiếu đặt, phiếu đối chiếu, người lập..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64">
+                                    <input type="text" id="filterDHSearch" oninput="filterDatHangTable()" placeholder="Tìm phiếu, người lập, team, sản phẩm, CN/TN..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64">
                                 </div>
-                                <button onclick="openModalAddDatHangDirect()" class="bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition flex items-center">
+                                <button type="button" onclick="openModalAddDatHangDirect()" class="bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition flex items-center">
                                     <i class="fa-solid fa-cart-plus mr-1.5"></i> Lập Phiếu
                                 </button>
                             </div>
@@ -2001,13 +2005,16 @@
             let filtered = sorted.filter(p => {
                 let matchDate = (!startDate || p.ngayLap >= startDate) && (!endDate || p.ngayLap <= endDate);
                 let trangThaiStr = calcTrangThaiDatHang(p).toLowerCase();
-                let matchSearch = !searchKey || 
-                    p.ma.toLowerCase().includes(searchKey) || 
-                    p.phieuDuyetMa.toLowerCase().includes(searchKey) ||
-                    (p.phieuDeXuatMa && p.phieuDeXuatMa.toLowerCase().includes(searchKey)) ||
-                    p.nguoiLap.toLowerCase().includes(searchKey) ||
-                    trangThaiStr.includes(searchKey) ||
-                    (p.ghiChu && p.ghiChu.toLowerCase().includes(searchKey));
+                const searchHay = [
+                    p.ma, p.phieuDuyetMa, p.phieuDeXuatMa, p.nguoiLap, p.teamDeXuat, p.ngayLap,
+                    trangThaiStr, p.ghiChu,
+                    ...(p.items||[]).flatMap(i=>[
+                        i.ma,i.ten,i.thuongHieu,i.dvt,i.ngayGiao,i.ngayNhan,i.ghiChu,
+                        i.slDat,i.slNhan,i.slTra,i.slHuy,
+                        ...(Array.isArray(i.allocations)?i.allocations.flatMap(a=>[a.hinhThuc,a.ngayDuKienNhan,a.ghiChu,a.sl,a.slNhan,a.slTra,a.slHuy]):[])
+                    ])
+                ].join(' ');
+                let matchSearch = !searchKey || window.qldhSmartIncludes(searchHay, searchKey);
 
                 return matchDate && matchSearch;
             });
@@ -2036,7 +2043,7 @@
                         <td class="p-2.5 border-r font-bold text-slate-800">${p.nguoiLap}</td>
                         <td class="p-2.5 border-r font-mono font-bold text-indigo-700">${p.ma}</td>
                         <td class="p-2.5 border-r font-mono">
-                            <button onclick="openModalViewDeXuatByCode('${p.phieuDeXuatMa}')" class="text-sky-600 hover:underline font-bold" title="Xem phiếu đề xuất">${p.phieuDeXuatMa || p.phieuDuyetMa}</button>
+                            <button type="button" onclick="openModalViewDeXuatByCode('${p.phieuDeXuatMa}')" class="text-sky-600 hover:underline font-bold" title="Xem phiếu đề xuất">${p.phieuDeXuatMa || p.phieuDuyetMa}</button>
                         </td>
                         <td class="p-2.5 border-r text-center text-slate-600">${formatDateVN(latestNgayNhan)}</td>
                         <td class="p-2.5 border-r text-center font-bold text-slate-700">${p.items.length}</td>
@@ -2048,8 +2055,8 @@
                         <td class="p-2.5 border-r text-center">${getBadgeTrangThaiDatHang(trangThaiText)}</td>
                         <td class="p-2.5 border-r text-slate-500">${p.ghiChu || '-'}</td>
                         <td class="p-2.5 text-center space-x-2">
-                            <button onclick="openModalViewDatHang('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
-                            <button onclick="openModalEditDatHang('${p.id}')" class="text-indigo-600 hover:text-indigo-800" title="Điều chỉnh ngày & ghi chú"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button type="button" onclick="openModalViewDatHang('${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" onclick="openModalEditDatHang('${p.id}')" class="text-indigo-600 hover:text-indigo-800" title="Điều chỉnh ngày & ghi chú"><i class="fa-solid fa-pen-to-square"></i></button>
                         </td>
                     </tr>
                 `;
@@ -2439,7 +2446,7 @@
                             <span class="font-bold text-slate-600">Tìm kiếm nhanh:</span>
                             <div class="relative">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                                <input type="text" id="filterTDSearch" oninput="filterTienDoSubTable()" placeholder="Số phiếu, người lập, phiếu đối chiếu..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-sky-500 w-64">
+                                <input type="text" id="filterTDSearch" oninput="filterTienDoSubTable()" placeholder="Tìm phiếu, người lập, team, sản phẩm, CN/TN..." class="border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-sky-500 w-64">
                             </div>
                         </div>
 
@@ -2455,7 +2462,7 @@
                                 </select>
                             </div>
 
-                            <button onclick="openModalAddPhieuTienDo('${currentTienDoTab}')" class="${cfg.btnClass} text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow transition flex items-center">
+                            <button type="button" onclick="openModalAddPhieuTienDo('${currentTienDoTab}')" class="${cfg.btnClass} text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow transition flex items-center">
                                 <i class="fa-solid fa-plus-circle mr-1.5"></i> ${cfg.btnText}
                             </button>
                         </div>
@@ -2512,11 +2519,14 @@
 
             let filtered = sorted.filter(p => {
                 let matchDate = (!sDate || p.ngayLap >= sDate) && (!eDate || p.ngayLap <= eDate);
-                let matchSearch = !searchKey || 
-                    p.ma.toLowerCase().includes(searchKey) || 
-                    p.phieuDoiChieuMa.toLowerCase().includes(searchKey) ||
-                    p.nguoiLap.toLowerCase().includes(searchKey) ||
-                    (p.ghiChu && p.ghiChu.toLowerCase().includes(searchKey));
+                const searchHay = [
+                    p.ma, p.phieuDoiChieuMa, p.nguoiLap, p.teamDeXuat, p.ngayLap, p.ghiChu,
+                    ...(p.items||[]).flatMap(i=>[
+                        i.ma,i.ten,i.thuongHieu,i.dvt,i.hinhThucNhan,i.hinhThuc,i.ngayNhan,i.ghiChu,
+                        ...(Array.isArray(i.allocations)?i.allocations.flatMap(a=>[a.hinhThuc,a.ngayDuKienNhan,a.ghiChu]):[])
+                    ])
+                ].join(' ');
+                let matchSearch = !searchKey || window.qldhSmartIncludes(searchHay, searchKey);
 
                 return matchDate && matchSearch;
             });
@@ -2544,13 +2554,13 @@
                         <td class="p-2.5 border-r font-mono font-bold ${cfg.textClass}">${p.ma}</td>
                         <td class="p-2.5 border-r font-bold text-slate-800">${p.nguoiLap}</td>
                         <td class="p-2.5 border-r font-mono">
-                            <button onclick="openModalViewPhieuDoiChieu('${p.phieuDoiChieuMa}')" class="text-indigo-600 hover:underline font-bold" title="Xem phiếu đối chiếu">${p.phieuDoiChieuMa}</button>
+                            <button type="button" onclick="openModalViewPhieuDoiChieu('${p.phieuDoiChieuMa}')" class="text-indigo-600 hover:underline font-bold" title="Xem phiếu đối chiếu">${p.phieuDoiChieuMa}</button>
                         </td>
                         <td class="p-2.5 border-r text-center font-bold text-slate-700">${p.items.length}</td>
                         <td class="p-2.5 border-r text-center font-mono font-bold ${cfg.textClass}">${totalSL}</td>
                         <td class="p-2.5 border-r text-slate-500">${p.ghiChu || '-'}</td>
                         <td class="p-2.5 text-center space-x-2">
-                            <button onclick="openModalViewPhieuTienDo('${currentTienDoTab}', '${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" onclick="openModalViewPhieuTienDo('${currentTienDoTab}', '${p.id}')" class="text-slate-500 hover:text-slate-800" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
                             ${isAdmin ? `<button onclick="handleDeletePhieuTienDo('${currentTienDoTab}', '${p.id}')" class="text-rose-600 hover:text-rose-800" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </td>
                     </tr>
@@ -3535,7 +3545,7 @@
 
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-slate-500 uppercase" id="lblCurrentDMTitle">DANH SÁCH MỤC</span>
-                        <button onclick="openModalAddItem()" class="bg-slate-900 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-800 shadow transition flex items-center">
+                        <button type="button" onclick="openModalAddItem()" class="bg-slate-900 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-800 shadow transition flex items-center">
                             <i class="fa-solid fa-plus-circle mr-1.5"></i> Thêm Mục Mới
                         </button>
                     </div>
@@ -3589,7 +3599,7 @@
                     <td class="p-2.5 border-r font-bold text-slate-800">${item.ten}</td>
                     <td class="p-2.5 border-r text-slate-500">${item.ghiChu || '-'}</td>
                     <td class="p-2.5 text-center space-x-2">
-                        <button onclick="openModalEditItem('${item.id}')" class="text-sky-600 hover:text-sky-800" title="Sửa"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button type="button" onclick="openModalEditItem('${item.id}')" class="text-sky-600 hover:text-sky-800" title="Sửa"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="handleDeleteItem('${item.id}')" class="text-rose-600 hover:text-rose-800" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 </tr>
@@ -3843,6 +3853,8 @@
         insertTeamField('modalDatHang', 'inputDHMa', 'Team Đề Xuất', true);
         insertTeamField('modalPhieuTienDo', 'inputTDMa', 'Team Đề Xuất', true);
     }
+    // Các patch ở IIFE khác cũng dùng helper này; expose ra window để tránh ReferenceError.
+    window.ensureAllTeamFields = ensureAllTeamFields;
 
     function setTeamField(id, value, disabled) {
         const el = document.getElementById(id + '_field');
@@ -4229,7 +4241,7 @@
             return showCustomConfirm('Thư viện Excel chưa được tải.', 'Lỗi');
         }
 
-        const list = ticketListForExport(type);
+        const list = qldhFilterExportTickets(type, ticketListForExport(type));
         const summary = [];
         const detail = [];
 
@@ -4311,6 +4323,8 @@
         ws2['!freeze'] = { xSplit: 0, ySplit: 1 };
         XLSX.utils.book_append_sheet(wb, ws1, `Danh Sách Phiếu (${tabName})`.slice(0,31));
         XLSX.utils.book_append_sheet(wb, ws2, 'Danh Sách Chi Tiết');
+        const rangeInfo = qldhGetExportRange(type);
+        wb.__qldhExportMeta = { kind:'ticket', title:tabName || 'Báo Cáo', start:rangeInfo.start, end:rangeInfo.end, sheetNames:wb.SheetNames.slice() };
         XLSX.writeFile(wb, `${tabName}_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
@@ -4469,7 +4483,7 @@
         if (!canManageDanhMuc()) return deny('Chỉ Quản Trị mới được quản lý Danh Mục Khác.');
         const tab = danhMucTabs.find(x=>x.id===tabId);
         if (!tab) return;
-        if (['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_TEAM_DE_XUAT'].includes(tabId))
+        if (['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_HTNH','tab_TEAM_DE_XUAT'].includes(tabId))
             return showCustomConfirm('Đây là danh mục hệ thống, không cho xóa tab.', 'Thông Báo');
         showCustomConfirm(`Xóa tab "${tab.name}" và toàn bộ mục bên trong?`, 'Xác Nhận', function() {
             danhMucTabs = danhMucTabs.filter(x=>x.id!==tabId);
@@ -4529,7 +4543,7 @@
                             <div class="flex items-center gap-1">
                                 <button onclick="switchDanhMucTab('${tab.id}')" id="btnDM_${tab.id}"
                                     class="px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap ${tab.id===currentDanhMucTabId?'bg-slate-900 text-white':'bg-slate-100 text-slate-600'}">${escapeHtml(tab.name)}</button>
-                                <button onclick="openModalCreateTab('${tab.id}')" class="text-sky-600 hover:text-sky-800 px-1" title="Sửa tab"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button type="button" onclick="openModalCreateTab('${tab.id}')" class="text-sky-600 hover:text-sky-800 px-1" title="Sửa tab"><i class="fa-solid fa-pen-to-square"></i></button>
                             </div>
                         `).join('')}
                     </div>
@@ -4540,7 +4554,7 @@
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold text-slate-500 uppercase">${escapeHtml((danhMucTabs.find(x=>x.id===currentDanhMucTabId)||{}).name || '')}</span>
-                    <button onclick="openModalAddItem()" class="bg-slate-900 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-plus-circle mr-1.5"></i> Thêm Mục Mới</button>
+                    <button type="button" onclick="openModalAddItem()" class="bg-slate-900 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-plus-circle mr-1.5"></i> Thêm Mục Mới</button>
                 </div>
                 <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-[500px] custom-scrollbar">
                     <table class="w-full text-left border-collapse text-xs">
@@ -4562,7 +4576,7 @@
             <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
                     <div class="text-xs font-bold text-slate-500 uppercase">Danh sách nhân viên</div>
-                    <button onclick="openModalAddNhanVien()" class="bg-orange-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-user-plus mr-1"></i> Thêm Nhân Viên</button>
+                    <button type="button" onclick="openModalAddNhanVien()" class="bg-orange-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold"><i class="fa-solid fa-user-plus mr-1"></i> Thêm Nhân Viên</button>
                 </div>
                 <div class="overflow-x-auto border rounded-lg max-h-[520px] custom-scrollbar">
                     <table class="w-full text-left border-collapse text-xs">
@@ -4580,7 +4594,7 @@
                                 <td class="p-2.5 border-r">${escapeHtml(n.phongBan||'')}</td><td class="p-2.5 border-r font-mono">${escapeHtml(n.taiKhoan)}</td>
                                 <td class="p-2.5 border-r">${escapeHtml(n.phanQuyen)}</td><td class="p-2.5 border-r text-center">${n.hieuLuc?'Có':'Không'}</td>
                                 <td class="p-2.5 text-center">
-                                    <button onclick="openModalEditNhanVien('${n.id}')" class="text-sky-600 mr-2"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button type="button" onclick="openModalEditNhanVien('${n.id}')" class="text-sky-600 mr-2"><i class="fa-solid fa-pen-to-square"></i></button>
                                     <button onclick="handleDeleteNhanVien('${n.id}')" class="text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
                                 </td>
                             </tr>`).join('')}
@@ -4721,8 +4735,8 @@
                     cho:Math.max(0,Number(i.slDat||0)-Number(i.slNhan||0)+Number(i.slTra||0)-Number(i.slHuy||0)),
                     ghi:i.ghiChu||''
                 };
-                const text=[row.phieu,row.nguoi,row.team,row.ma,row.brand,row.ten].join(' ').toLowerCase();
-                if((!sd||row.ngayDat>=sd)&&(!ed||row.ngayDat<=ed)&&(!key||text.includes(key))) rows.push(row);
+                const text=[row.phieu,row.nguoi,row.team,row.ngayDat,row.ngayNhan,row.ma,row.brand,row.ten,row.dvt,row.ghi].join(' ');
+                if((!sd||row.ngayDat>=sd)&&(!ed||row.ngayDat<=ed)&&(!key||window.qldhSmartIncludes(text,key))) rows.push(row);
             });
         });
 
@@ -4997,6 +5011,8 @@
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(rows);
         XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+        const rangeInfo = qldhGetReportExportRange(sheetName);
+        wb.__qldhExportMeta = { kind:'report', title:sheetName || 'Báo Cáo', start:rangeInfo.start, end:rangeInfo.end, sheetNames:wb.SheetNames.slice() };
         XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
@@ -5127,10 +5143,15 @@
     window.switchView = function (viewId) {
         const validViews = ['deXuat','duyetDeXuat','datHang','tienDo','baoCaoChiTiet','baoCaoDuKien','khaiBaoSanPham','khaiBaoNhanVien','danhMucKhac'];
         if (!validViews.includes(viewId)) viewId = 'deXuat';
+        const previousView = currentView;
         currentView = viewId;
 
-        // Đóng modal cũ khi đổi tab để tránh lớp overlay còn treo.
-        document.querySelectorAll('#modalDeXuat,#modalDuyetDeXuat,#modalDatHang,#modalPhieuTienDo,#modalNhanVien,#modalSanPham,#modalImportExcel,#modalQuickDanhMuc').forEach(m => m.classList.add('hidden'));
+        // Chỉ đóng modal khi THỰC SỰ chuyển sang tab khác.
+        // loadState()/pull() cũng gọi switchView(currentView) để refresh dữ liệu nền;
+        // không được đóng modal đang mở vì thao tác này làm form Lập Phiếu bị bật ra.
+        if (viewId !== previousView) {
+            document.querySelectorAll('#modalDeXuat,#modalDuyetDeXuat,#modalDatHang,#modalPhieuTienDo,#modalNhanVien,#modalSanPham,#modalImportExcel,#modalQuickDanhMuc').forEach(m => m.classList.add('hidden'));
+        }
 
         if (typeof originalSwitchView === 'function') originalSwitchView(viewId);
 
@@ -5732,7 +5753,7 @@
 (function () {
     'use strict';
 
-    const SYSTEM_TAB_IDS = ['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_TEAM_DE_XUAT'];
+    const SYSTEM_TAB_IDS = ['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_HTNH','tab_TEAM_DE_XUAT'];
     const isSystemTab = id => SYSTEM_TAB_IDS.includes(id);
     const adminOnly = () => {
         if (!(typeof canManageDanhMuc === 'function' && canManageDanhMuc())) {
@@ -5877,7 +5898,7 @@
 <script>
 (function(){
   'use strict';
-  const SYSTEM_TAB_IDS = ['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_TEAM_DE_XUAT'];
+  const SYSTEM_TAB_IDS = ['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_HTNH','tab_TEAM_DE_XUAT'];
   function adminOnly(){
     if (!(typeof canManageDanhMuc === 'function' && canManageDanhMuc())) {
       if (typeof deny === 'function') deny('Chỉ Quản Trị mới được quản lý Danh Mục.');
@@ -5962,7 +5983,7 @@
 <script>
 (function(){
   'use strict';
-  const SYS = new Set(['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_TEAM_DE_XUAT']);
+  const SYS = new Set(['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_HTNH','tab_TEAM_DE_XUAT']);
   function isAdminDM(){
     try { return typeof window.canManageDanhMuc === 'function' && window.canManageDanhMuc(); } catch(e){ return false; }
   }
@@ -6036,7 +6057,7 @@
     if(!Array.isArray(tabs))return notify('Không tìm thấy dữ liệu danh mục.','Lỗi');
     if(tabs.some(t=>t.id!==id&&String(t.name||'').trim().toLowerCase()===name.toLowerCase()))return notify('Tên Tab đã tồn tại. Vui lòng chọn tên khác.','Lỗi');
     if(tabs.some(t=>t.id!==id&&String(t.prefix||'').trim().toLowerCase()===prefix.toLowerCase()))return notify('Mã Tab đã tồn tại. Vui lòng chọn mã khác.','Lỗi');
-    if(id){const tab=tabs.find(t=>t.id===id);if(!tab)return notify('Không tìm thấy Tab cần chỉnh sửa.','Lỗi');tab.name=name;const sys=['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_TEAM_DE_XUAT'];if(!sys.includes(tab.id)&&(!Array.isArray(tab.items)||tab.items.length===0))tab.prefix=prefix;currentDanhMucTabId=tab.id;}
+    if(id){const tab=tabs.find(t=>t.id===id);if(!tab)return notify('Không tìm thấy Tab cần chỉnh sửa.','Lỗi');tab.name=name;const sys=['tab_TH','tab_DVT','tab_CV','tab_PB','tab_TTD','tab_HTNH','tab_TEAM_DE_XUAT'];if(!sys.includes(tab.id)&&(!Array.isArray(tab.items)||tab.items.length===0))tab.prefix=prefix;currentDanhMucTabId=tab.id;}
     else{const tab={id:'tab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),name,prefix,items:[]};tabs.push(tab);currentDanhMucTabId=tab.id;}
     closeEl('modalCreateTab'); if(typeof window.renderDanhMucKhacView==='function')window.renderDanhMucKhacView(); notify(id?'Đã lưu thay đổi Tab thành công.':'Đã thêm Tab mới thành công.','Thành Công');
   };
@@ -6831,7 +6852,7 @@
         const rh=h(remote[k]), lh=h(getters[k]());
         if(lh!==rh){setKey(k,remote[k]);lastHash[k]=rh;cacheStateKey(k,remote[k]);changed=true;}
       }
-      if(changed){syncRefs();try{if(typeof switchView==='function'&&currentView)switchView(currentView);}catch(e){}}
+      if(changed){syncRefs();try{window.__qldhSoftRefreshCurrentView?.();}catch(e){console.error('SOFT REFRESH',e);}}
     }catch(e){if(e.status===401)setToken('');else console.error('PULL',e);}finally{pulling=false;}
   }
   function checkSave(){flushDirty();}
@@ -7058,14 +7079,1223 @@
         Promise.allSettled([loadEmployees(),loadState()]);
       }).catch(e=>{
         console.warn('SESSION VERIFY FAILED',e);
-        setToken('');
-        currentUser=window.currentUser=null;
-        document.getElementById('appView')?.classList.add('hidden');
-        document.getElementById('loginView')?.classList.remove('hidden');
-        setSyncStatus('',false);
+        // Không tự đá người dùng ra màn hình đăng nhập trong lúc boot.
+        // Render cold-start, timeout hoặc token cũ chỉ được báo trạng thái;
+        // việc đăng nhập lại chỉ xảy ra khi người dùng chủ động đăng nhập/đăng xuất.
+        setSyncStatus('Phiên đang hoạt động • sẽ kiểm tra lại sau',true);
+        setTimeout(()=>setSyncStatus('',false),2500);
       });
     },120);
   });
 })();
 
+</script>
+
+
+<!-- NGHIỆP VỤ v15: PHÂN BỔ KHO/CẢNG + SẢN PHẨM TRÙNG DÒNG + BÁO CÁO -->
+<script>
+(function(){
+  'use strict';
+
+  const BIZ_OWNER='Chủ Sở Hữu', BIZ_ADMIN='Quản Trị';
+  const UNALLOCATED_TYPE='Chưa phân bổ';
+  const DEFAULT_RECEIPT_TYPES=['CN','TN'];
+  let ALLOC_TYPES=[UNALLOCATED_TYPE, ...DEFAULT_RECEIPT_TYPES];
+  let allocCtx={dhId:'',itemIndex:0};
+
+  function ensureReceiptMethodTab(persist=false){
+    if(typeof danhMucTabs==='undefined' || !Array.isArray(danhMucTabs)) return null;
+    let tab=danhMucTabs.find(t=>t && (t.id==='tab_HTNH' || String(t.name||'').trim().toLowerCase()==='hình thức nhận hàng'));
+    if(!tab){
+      tab={id:'tab_HTNH',name:'Hình Thức Nhận Hàng',prefix:'HTNH',items:[
+        {id:'HTNH01',ma:'HTNH01',ten:'CN',ghiChu:'Hình thức nhận mặc định'},
+        {id:'HTNH02',ma:'HTNH02',ten:'TN',ghiChu:'Hình thức nhận mặc định'}
+      ]};
+      danhMucTabs.push(tab);
+      if(persist) window.__qldhMarkDirty?.('danhMucTabs');
+    }else{
+      tab.id='tab_HTNH'; tab.name=tab.name||'Hình Thức Nhận Hàng'; tab.prefix=tab.prefix||'HTNH';
+      tab.items=Array.isArray(tab.items)?tab.items:[];
+    }
+    return tab;
+  }
+
+  function getReceiptMethodNames(){
+    const tab=ensureReceiptMethodTab(false);
+    const names=(tab?.items||[]).map(x=>String(x.ten||'').trim()).filter(n=>n && n!==UNALLOCATED_TYPE);
+    return [...new Set(names)];
+  }
+
+  function syncAllocTypesFromMaster(){
+    const names=getReceiptMethodNames();
+    ALLOC_TYPES.splice(0,ALLOC_TYPES.length,UNALLOCATED_TYPE,...names);
+    // Nếu một phiếu cũ đang dùng hình thức đã bị xóa khỏi danh mục, vẫn giữ tên đó
+    // như một lựa chọn tạm thời để mở/sửa dữ liệu lịch sử mà không làm mất dữ liệu.
+    try{
+      const item=getAllocCurrentItem();
+      (item?.allocations||[]).forEach(a=>{
+        const n=String(a?.hinhThuc||a?.hinhThucNhan||'').trim();
+        if(n && !ALLOC_TYPES.includes(n)) ALLOC_TYPES.push(n);
+      });
+    }catch(e){}
+    return ALLOC_TYPES;
+  }
+  window.__qldhEnsureReceiptMethodTab=ensureReceiptMethodTab;
+  window.__qldhSyncAllocTypes=syncAllocTypesFromMaster;
+
+  ensureReceiptMethodTab(false);
+
+  function bizEsc(v){
+    try{ if(typeof escapeHtml==='function') return escapeHtml(v==null?'':String(v)); }catch(e){}
+    return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function bizId(prefix){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);}
+  function canAllocateBiz(){
+    const r=String(currentUser?.phanQuyen||'').trim();
+    return r===BIZ_OWNER || r===BIZ_ADMIN || r.toLowerCase()===BIZ_OWNER.toLowerCase() || r.toLowerCase()===BIZ_ADMIN.toLowerCase();
+  }
+  function ensureItemLineId(item){ if(!item.lineId) item.lineId=bizId('LINE'); return item.lineId; }
+  function ensureBizLineIds(){
+    const groups=[window.listPhieuDeXuat,window.listPhieuDuyetDeXuat,window.listPhieuDatHang,window.listPhieuNhanHang,window.listPhieuTraHang,window.listPhieuHuyHang];
+    groups.forEach(list=>{(list||[]).forEach(p=>{(p.items||[]).forEach(ensureItemLineId);});});
+  }
+
+  function cloneAlloc(a){
+    return {
+      id:a.id||bizId('ALLOC'),
+      hinhThuc:a.hinhThuc||a.hinhThucNhan||UNALLOCATED_TYPE,
+      sl:Math.max(0,Number(a.sl??a.soLuong??0)||0),
+      slNhan:Math.max(0,Number(a.slNhan||0)),
+      slTra:Math.max(0,Number(a.slTra||0)),
+      slHuy:Math.max(0,Number(a.slHuy||0)),
+      ghiChu:a.ghiChu||'',
+      ngayDuKienNhan:a.ngayDuKienNhan||a.ngayNhan||''
+    };
+  }
+  function getAllocations(item, persist=true){
+    ensureItemLineId(item);
+    let arr=Array.isArray(item.allocations)?item.allocations.map(cloneAlloc):[];
+    const total=Math.max(0,Number(item.slDat||0));
+    if(!arr.length && total>0){
+      arr=[{id:'ALLOC-'+item.lineId,hinhThuc:UNALLOCATED_TYPE,sl:total,slNhan:Number(item.slNhan||0),slTra:Number(item.slTra||0),slHuy:Number(item.slHuy||0),ghiChu:'',ngayDuKienNhan:item.ngayNhan||''}];
+      if(persist) item.allocations=arr;
+    } else if(persist) item.allocations=arr;
+    return arr;
+  }
+  function syncItemTotalsFromAlloc(item){
+    const arr=getAllocations(item,true);
+    item.slNhan=arr.reduce((s,a)=>s+Number(a.slNhan||0),0);
+    item.slTra=arr.reduce((s,a)=>s+Number(a.slTra||0),0);
+    item.slHuy=arr.reduce((s,a)=>s+Number(a.slHuy||0),0);
+  }
+  function allocationStats(item){
+    const arr=getAllocations(item,false);
+    const total=Number(item.slDat||0);
+    const assigned=arr.filter(a=>a.hinhThuc!=='Chưa phân bổ').reduce((s,a)=>s+Number(a.sl||0),0);
+    const explicit=arr.reduce((s,a)=>s+Number(a.sl||0),0);
+    const unallocated=Math.max(0,total-assigned);
+    const received=arr.reduce((s,a)=>s+Number(a.slNhan||0),0);
+    const returned=arr.reduce((s,a)=>s+Number(a.slTra||0),0);
+    const cancelled=arr.reduce((s,a)=>s+Number(a.slHuy||0),0);
+    return {total,assigned,explicit,unallocated,received,returned,cancelled,status:assigned===0?'Chưa phân bổ':assigned<total?'Phân bổ một phần':'Đã phân bổ'};
+  }
+  function ensureAllocationModal(){
+    if(document.getElementById('modalPhanBoNhanHang')) return;
+    const d=document.createElement('div');
+    d.id='modalPhanBoNhanHang';
+    d.className='fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center z-[180] hidden';
+    d.innerHTML=`
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+        <div class="bg-indigo-700 px-6 py-4 flex justify-between items-center text-white shrink-0">
+          <div>
+            <h3 class="font-bold text-sm flex items-center"><i class="fa-solid fa-diagram-project mr-2"></i> Phân Bổ Hình Thức Nhận Hàng</h3>
+            <div class="text-indigo-100 text-[11px] mt-1" id="qldhAllocTitle">Phiếu Đặt Hàng</div>
+          </div>
+          <button type="button" onclick="closePhanBoNhanHang()" class="text-indigo-100 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 flex-grow">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 border rounded-xl p-3"><div class="text-[10px] text-slate-500 font-bold uppercase">Sản phẩm</div><div id="qldhAllocSP" class="font-bold text-slate-800 mt-1">-</div></div>
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3"><div class="text-[10px] text-indigo-500 font-bold uppercase">SL Đặt</div><div id="qldhAllocTotal" class="font-black text-indigo-700 text-lg mt-0.5">0</div></div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3"><div class="text-[10px] text-emerald-600 font-bold uppercase">Trạng thái</div><div id="qldhAllocStatus" class="font-bold text-emerald-700 mt-1">Chưa phân bổ</div></div>
+          </div>
+          <div class="flex items-end gap-3">
+            <div class="flex-1"><label class="block text-xs font-bold text-slate-600 mb-1">Chọn mặt hàng</label><select id="qldhAllocItemSelect" onchange="renderPhanBoNhanHangEditor()" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white font-semibold"></select></div>
+            <button type="button" onclick="addAllocationRow()" class="px-4 py-2.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-xs hover:bg-indigo-100"><i class="fa-solid fa-plus mr-1"></i> Thêm dòng phân bổ</button>
+          </div>
+          <div id="qldhAllocEditor" class="space-y-3"></div>
+        </div>
+        <div class="px-5 py-4 border-t flex justify-between items-center shrink-0 bg-slate-50">
+          <div id="qldhAllocMessage" class="text-xs font-semibold text-slate-500"></div>
+          <div class="flex gap-2"><button type="button" onclick="closePhanBoNhanHang()" class="px-4 py-2 bg-white border rounded-lg text-slate-600 font-bold text-xs">Hủy</button><button type="button" onclick="savePhanBoNhanHang()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow"><i class="fa-solid fa-floppy-disk mr-1.5"></i> Lưu phân bổ</button></div>
+        </div>
+      </div>`;
+    document.body.appendChild(d);
+  }
+
+  function getAllocCurrentItem(){
+    const dh=listPhieuDatHang.find(x=>x.id===allocCtx.dhId); if(!dh) return null;
+    return dh.items?.[allocCtx.itemIndex]||null;
+  }
+  function renderAllocationSummary(item){
+    const s=allocationStats(item);
+    document.getElementById('qldhAllocSP').textContent=`${item.ma||''} – ${item.ten||''}`;
+    document.getElementById('qldhAllocTotal').textContent=String(s.total);
+    const status=document.getElementById('qldhAllocStatus');
+    status.textContent=s.status;
+    status.className='font-bold mt-1 '+(s.status==='Đã phân bổ'?'text-emerald-700':s.status==='Phân bổ một phần'?'text-amber-700':'text-slate-500');
+  }
+  function renderPhanBoNhanHangEditor(){
+    const item=getAllocCurrentItem(); const box=document.getElementById('qldhAllocEditor'); if(!item||!box)return;
+    const arr=getAllocations(item,false);
+    renderAllocationSummary(item);
+    box.innerHTML=`
+      <div class="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.95fr_1.2fr_36px] gap-2 items-center px-3 text-[10px] font-bold text-slate-500 uppercase">
+        <div>Hình thức nhận</div><div class="text-center">SL phân bổ</div><div class="text-center">Đã nhận</div><div>Ngày dự kiến nhận</div><div>Ghi chú</div><div></div>
+      </div>` + arr.map((a,i)=>`
+      <div class="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.95fr_1.2fr_36px] gap-2 items-center bg-slate-50 border rounded-xl p-3" data-alloc-row data-alloc-index="${i}" data-alloc-id="${bizEsc(a.id)}">
+        <select class="qldhAllocType border border-slate-300 rounded-lg p-2 bg-white text-xs font-semibold">
+          ${ALLOC_TYPES.map(t=>`<option value="${bizEsc(t)}" ${a.hinhThuc===t?'selected':''}>${bizEsc(t)}</option>`).join('')}
+        </select>
+        <input type="number" min="0" step="1" class="qldhAllocQty border border-slate-300 rounded-lg p-2 text-center font-mono font-bold" value="${a.sl}" />
+        <div class="text-center text-xs"><div class="text-slate-400">Đã nhận</div><div class="font-bold text-emerald-700">${a.slNhan}</div></div>
+        <input type="date" class="qldhAllocDate border border-slate-300 rounded-lg p-2 text-xs" value="${bizEsc(a.ngayDuKienNhan || item.ngayNhan || '')}" />
+        <input type="text" class="qldhAllocNote border border-slate-300 rounded-lg p-2 text-xs" value="${bizEsc(a.ghiChu)}" placeholder="Ghi chú..." />
+        <button type="button" onclick="removeAllocationRow(${i})" class="text-rose-600 hover:text-rose-800" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button>
+      </div>`).join('');
+    const s=allocationStats(item);
+    document.getElementById('qldhAllocMessage').innerHTML=`Tổng đã phân bổ: <b>${s.assigned}</b> / ${s.total} · Còn chưa phân bổ: <b>${s.unallocated}</b>`;
+  }
+  function currentRenderedAllocRows(){
+    return [...document.querySelectorAll('#qldhAllocEditor [data-alloc-row]')].map((row,i)=>({
+      id:row.getAttribute('data-alloc-id')||'',
+      type:row.querySelector('.qldhAllocType')?.value||UNALLOCATED_TYPE,
+      sl:Math.max(0,Number(row.querySelector('.qldhAllocQty')?.value||0)),
+      ngayDuKienNhan:row.querySelector('.qldhAllocDate')?.value||'',
+      ghiChu:row.querySelector('.qldhAllocNote')?.value||'',
+      i
+    }));
+  }
+  function addAllocationRow(){
+    const item=getAllocCurrentItem(); if(!item)return;
+    const box=document.getElementById('qldhAllocEditor');
+    const rows=currentRenderedAllocRows();
+    const idx=rows.length;
+    const div=document.createElement('div'); div.setAttribute('data-alloc-row',''); div.setAttribute('data-alloc-index',String(idx)); div.setAttribute('data-alloc-id',bizId('ALLOC'));
+    div.className='grid grid-cols-[1.2fr_0.8fr_0.8fr_0.95fr_1.2fr_36px] gap-2 items-center bg-slate-50 border rounded-xl p-3';
+    div.innerHTML=`<select class="qldhAllocType border border-slate-300 rounded-lg p-2 bg-white text-xs font-semibold">${ALLOC_TYPES.map(t=>`<option value="${bizEsc(t)}">${bizEsc(t)}</option>`).join('')}</select><input type="number" min="0" step="1" class="qldhAllocQty border border-slate-300 rounded-lg p-2 text-center font-mono font-bold" value="0" /><div class="text-center text-xs"><div class="text-slate-400">Đã nhận</div><div class="font-bold text-emerald-700">0</div></div><input type="date" class="qldhAllocDate border border-slate-300 rounded-lg p-2 text-xs" value="${bizEsc(item.ngayNhan||'')}" /><input type="text" class="qldhAllocNote border border-slate-300 rounded-lg p-2 text-xs" value="" placeholder="Ghi chú..." /><button type="button" onclick="this.closest('[data-alloc-row]').remove();" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash-can"></i></button>`;
+    box.appendChild(div);
+  }
+  function removeAllocationRow(i){
+    const rows=[...document.querySelectorAll('#qldhAllocEditor [data-alloc-row]')]; if(rows[i]) rows[i].remove();
+  }
+  function savePhanBoNhanHang(){
+    if(!canAllocateBiz()) return deny('Chỉ Chủ Sở Hữu hoặc Quản Trị được quyền phân bổ hình thức nhận hàng.');
+    const item=getAllocCurrentItem(); if(!item)return;
+    ensureItemLineId(item);
+    const old=getAllocations(item,true);
+    const rows=currentRenderedAllocRows();
+    const total=Math.max(0,Number(item.slDat||0));
+    const merged=[];
+    rows.forEach(r=>{
+      if(!ALLOC_TYPES.includes(r.type))return;
+      let ex=merged.find(x=>x.hinhThuc===r.type);
+      if(!ex){
+        const oldSame=old.find(a=>a.hinhThuc===r.type);
+        ex={id:oldSame?.id||bizId('ALLOC'),hinhThuc:r.type,sl:0,slNhan:0,slTra:0,slHuy:0,ghiChu:r.ghiChu||'',ngayDuKienNhan:r.ngayDuKienNhan||oldSame?.ngayDuKienNhan||item.ngayNhan||''};
+        merged.push(ex);
+      }
+      ex.sl += r.sl;
+      if(r.ngayDuKienNhan) ex.ngayDuKienNhan=r.ngayDuKienNhan;
+      if(r.ghiChu) ex.ghiChu=r.ghiChu;
+    });
+    let allTotal=merged.reduce((s,a)=>s+a.sl,0);
+    if(allTotal>total) return showCustomConfirm(`Tổng số lượng phân bổ không được vượt quá ${total}. Hiện đang là ${allTotal}.`, 'Sai Số Lượng Phân Bổ');
+    if(allTotal<total){
+      let u=merged.find(a=>a.hinhThuc===UNALLOCATED_TYPE);
+      if(!u){u={id:bizId('ALLOC'),hinhThuc:UNALLOCATED_TYPE,sl:0,slNhan:0,slTra:0,slHuy:0,ghiChu:'',ngayDuKienNhan:item.ngayNhan||''};merged.push(u);}
+      u.sl += (total-allTotal);
+      allTotal=total;
+    }
+    for(const a of merged){
+      const rowData=rows.find(r=>r.id===a.id);
+      const oldSame=old.find(x=>x.id===a.id)||old.find(x=>x.hinhThuc===a.hinhThuc);
+      if(oldSame){a.slNhan=oldSame.slNhan||0;a.slTra=oldSame.slTra||0;a.slHuy=oldSame.slHuy||0;if(!a.ghiChu)a.ghiChu=oldSame.ghiChu||'';if(!a.ngayDuKienNhan)a.ngayDuKienNhan=oldSame.ngayDuKienNhan||item.ngayNhan||'';}
+      if(a.sl < Number(a.slNhan||0)) return showCustomConfirm(`Dòng ${a.hinhThuc} không thể nhỏ hơn số lượng đã nhận (${a.slNhan}).`, 'Không Hợp Lệ');
+    }
+    item.allocations=merged;
+    syncItemTotalsFromAlloc(item);
+    try{
+      const idx=Number(allocCtx.itemIndex); currentDetailDHItems=JSON.parse(JSON.stringify(listPhieuDatHang.find(d=>d.id===allocCtx.dhId)?.items||[]));
+      document.getElementById('editDHId').value=allocCtx.dhId;
+      window.handleSaveDatHang({preventDefault(){}});
+    }catch(e){console.error('SAVE ALLOCATION',e);}
+    closePhanBoNhanHang();
+    try{renderDatHangView();}catch(e){}
+  }
+  function openPhanBoNhanHang(dhId,itemIndex=0){
+    if(!canAllocateBiz()) return deny('Chỉ Chủ Sở Hữu hoặc Quản Trị được quyền phân bổ hình thức nhận hàng.');
+    ensureAllocationModal(); ensureBizLineIds();
+    const dh=listPhieuDatHang.find(x=>x.id===dhId); if(!dh)return;
+    (dh.items||[]).forEach(i=>{ensureItemLineId(i);getAllocations(i,true);syncItemTotalsFromAlloc(i);});
+    allocCtx={dhId,itemIndex:Number(itemIndex)||0};
+    document.getElementById('qldhAllocTitle').textContent=`${dh.ma} · Phiếu Đặt Hàng`;
+    const select=document.getElementById('qldhAllocItemSelect');
+    select.innerHTML=(dh.items||[]).map((i,idx)=>`<option value="${idx}">${idx+1}. ${bizEsc(i.ma)} – ${bizEsc(i.ten)} (SL ${Number(i.slDat||0)})</option>`).join('');
+    select.value=String(Math.min(allocCtx.itemIndex,Math.max(0,(dh.items||[]).length-1)));
+    allocCtx.itemIndex=Number(select.value)||0;
+    renderPhanBoNhanHangEditor();
+    document.getElementById('modalPhanBoNhanHang').classList.remove('hidden');
+  }
+  function closePhanBoNhanHang(){document.getElementById('modalPhanBoNhanHang')?.classList.add('hidden');}
+  window.openPhanBoNhanHang=openPhanBoNhanHang; window.closePhanBoNhanHang=closePhanBoNhanHang; window.addAllocationRow=addAllocationRow; window.removeAllocationRow=removeAllocationRow; window.savePhanBoNhanHang=savePhanBoNhanHang; window.renderPhanBoNhanHangEditor=renderPhanBoNhanHangEditor;
+
+  // Cho phép cùng một mã SP xuất hiện nhiều dòng trong Phiếu Đề Xuất.
+  const _oldConfirmAdd=window.confirmAddSelectedProducts;
+  window.confirmAddSelectedProducts=function(){
+    ensureBizLineIds();
+    const selectedMas=Array.from(document.querySelectorAll('.chkSpModalItem:checked')).map(x=>x.value);
+    selectedMas.forEach(ma=>{
+      const sp=listSanPham.find(s=>s.ma===ma); if(!sp)return;
+      currentDetailDXItems.push({lineId:bizId('LINE'),ma:sp.ma,thuongHieu:sp.thuongHieu,ten:sp.ten,dvt:sp.dvt,sl:1,ngayNhan:new Date().toISOString().split('T')[0],ghiChu:'',trangThaiItem:'Đang xem xét'});
+    });
+    closeModalSelectProduct(); renderTableDetailDeXuat();
+  };
+
+  // Duyệt theo lineId, không theo mã SP để giữ đúng các dòng trùng nhau.
+  window.openModalDuyetDeXuatFromDX=function(pId){
+    if(typeof canApprove==='function'&&!canApprove()) return deny('Chỉ tài khoản Chủ Sở Hữu hoặc Quản Trị mới được quyền duyệt phiếu.');
+    ensureBizLineIds(); const pdx=listPhieuDeXuat.find(p=>p.id===pId); if(!pdx)return;
+    (pdx.items||[]).forEach(ensureItemLineId);
+    const pending=pdx.items.filter(i=>!['Đã duyệt','DaDuyet','Từ chối','TuChoi'].includes(i.trangThaiItem||''));
+    if(!pending.length)return showCustomConfirm('Phiếu này không còn sản phẩm đang chờ duyệt.','Thông Báo');
+    const today=new Date().toISOString().slice(0,10);
+    document.getElementById('editDDXId').value=''; document.getElementById('editDDXTargetDXId').value=pdx.id;
+    document.getElementById('inputDDXSoPhieuDX').value=pdx.ma; document.getElementById('inputDDXMa').value=generateNextDuyetDeXuatCode(today);
+    document.getElementById('inputDDXNgayDuyet').value=today; document.getElementById('inputDDXNguoiDuyet').value=currentUser?.tenNV||''; document.getElementById('inputDDXGhiChu').value='';
+    if(typeof setTeamField==='function')setTeamField('inputDDXMa',pdx.teamDeXuat||'',true);
+    currentDetailDDXItems=JSON.parse(JSON.stringify(pending.map((i,pi)=>({...i,sourceItemIndex:pdx.items.indexOf(i),slDuyet:i.slDuyet!==undefined?i.slDuyet:i.sl,trangThaiItem:'Đang xem xét',lineId:i.lineId}))));
+    renderTableDetailDuyetDeXuat(); document.getElementById('btnSaveDDX').classList.remove('hidden'); document.getElementById('modalDuyetDeXuat').classList.remove('hidden');
+  };
+  window.handleSaveDuyetDeXuat=function(e){
+    e.preventDefault(); if(typeof canApprove==='function'&&!canApprove())return deny('Chỉ tài khoản Chủ Sở Hữu hoặc Quản Trị mới được quyền duyệt phiếu.');
+    ensureBizLineIds();
+    const targetDXId=document.getElementById('editDDXTargetDXId').value, pdx=listPhieuDeXuat.find(p=>p.id===targetDXId), editDDXId=document.getElementById('editDDXId').value;
+    if(!pdx&&!editDDXId)return showCustomConfirm('Không xác định được phiếu đề xuất.','Lỗi');
+    if(pdx){
+      currentDetailDDXItems.forEach(item=>{
+        const target=(item.lineId && pdx.items.find(i=>i.lineId===item.lineId)) || (Number.isInteger(item.sourceItemIndex)?pdx.items[item.sourceItemIndex]:null) || pdx.items.find(i=>i.ma===item.ma);
+        if(target){target.slDuyet=Math.min(Number(item.slDuyet||0),Number(target.sl||0));target.trangThaiItem=item.trangThaiItem;target.ghiChu=item.ghiChu||'';}
+      });
+      pdx.trangThaiAdmin='ĐãXửLý';
+    }
+    const approved=currentDetailDDXItems.filter(i=>i.trangThaiItem==='Đã duyệt'&&Number(i.slDuyet||0)>0);
+    if(approved.length){
+      const existing=editDDXId?listPhieuDuyetDeXuat.find(x=>x.id===editDDXId):null;
+      const obj=existing||{id:document.getElementById('inputDDXMa').value,ma:document.getElementById('inputDDXMa').value,phieuDeXuatMa:pdx?.ma||document.getElementById('inputDDXSoPhieuDX').value,items:[],trangThaiDatHang:'Chờ Đặt Hàng'};
+      obj.ngayDuyet=document.getElementById('inputDDXNgayDuyet').value; obj.nguoiDuyet=document.getElementById('inputDDXNguoiDuyet').value; obj.ghiChu=document.getElementById('inputDDXGhiChu').value.trim(); obj.teamDeXuat=pdx?.teamDeXuat||obj.teamDeXuat||'';
+      obj.items=JSON.parse(JSON.stringify(approved.map(i=>({...i,lineId:i.lineId||bizId('LINE')}))));
+      if(!existing)listPhieuDuyetDeXuat.push(obj);
+    }else if(editDDXId){listPhieuDuyetDeXuat=listPhieuDuyetDeXuat.filter(d=>d.id!==editDDXId);}
+    closeModalDuyetDeXuat(); renderDuyetDeXuatView();
+  };
+
+  // Giữ lineId khi tạo/sửa/xem Phiếu Đặt Hàng và khởi tạo allocation.
+  function normalizeDHCurrentFromSource(sourceItems){
+    return (sourceItems||[]).map(src=>({
+      ...src,lineId:src.lineId||bizId('LINE'),
+      slDat:Number(src.slDat||src.slDuyet||0),slNhan:Number(src.slNhan||0),slTra:Number(src.slTra||0),slHuy:Number(src.slHuy||0),
+      allocations:Array.isArray(src.allocations)?JSON.parse(JSON.stringify(src.allocations)).map(a=>({...a,ngayDuKienNhan:a.ngayDuKienNhan||a.ngayNhan||src.ngayNhan||''})):[]
+    }));
+  }
+  function prepareDHItems(){
+    ensureBizLineIds();
+    currentDetailDHItems=(currentDetailDHItems||[]).map(i=>{ensureItemLineId(i);getAllocations(i,true);syncItemTotalsFromAlloc(i);return i;});
+  }
+  const _oldOpenDHFromDDX=window.openModalDatHangFromDDX;
+  window.openModalDatHangFromDDX=function(id){_oldOpenDHFromDDX.call(this,id);const ddx=listPhieuDuyetDeXuat.find(x=>x.id===id);if(ddx)currentDetailDHItems=normalizeDHCurrentFromSource(ddx.items);prepareDHItems();renderTableDetailDatHang(false);};
+  const _oldSelectDDXDH=window.onSelectPhieuDuyetForDH;
+  window.onSelectPhieuDuyetForDH=function(id){_oldSelectDDXDH.call(this,id);const ddx=listPhieuDuyetDeXuat.find(x=>x.id===id);if(ddx)currentDetailDHItems=normalizeDHCurrentFromSource(ddx.items);prepareDHItems();renderTableDetailDatHang(false);};
+  const _oldOpenEditDH=window.openModalEditDatHang;
+  window.openModalEditDatHang=function(id){_oldOpenEditDH.call(this,id);const dh=listPhieuDatHang.find(x=>x.id===id);if(dh){ensureBizLineIds();currentDetailDHItems=JSON.parse(JSON.stringify(dh.items));prepareDHItems();renderTableDetailDatHang(false);}};
+  const _oldOpenViewDH=window.openModalViewDatHang;
+  window.openModalViewDatHang=function(id){_oldOpenViewDH.call(this,id);const dh=listPhieuDatHang.find(x=>x.id===id);if(dh){ensureBizLineIds();currentDetailDHItems=JSON.parse(JSON.stringify(dh.items));prepareDHItems();renderTableDetailDatHang(true);}};
+
+  function dhAllocSummaryHtml(item,readOnly){
+    const s=allocationStats(item); const arr=getAllocations(item,false);
+    if(!arr.length)return '<span class="text-slate-400">Chưa phân bổ</span>';
+    const badges=arr.filter(a=>a.sl>0).map(a=>`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${a.hinhThuc==='Nhận tại kho'?'bg-sky-100 text-sky-700':a.hinhThuc==='Nhận tại cảng'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'} mr-1 mb-1">${bizEsc(a.hinhThuc)}: ${a.sl}</span>`).join('');
+    const btn=(!readOnly&&canAllocateBiz()&&document.getElementById('editDHId')?.value)?`<button type="button" onclick="openPhanBoNhanHang(document.getElementById('editDHId').value,${currentDetailDHItems.indexOf(item)})" class="ml-1 text-indigo-600 hover:text-indigo-800" title="Phân bổ"><i class="fa-solid fa-diagram-project"></i></button>`:(canAllocateBiz()&&document.getElementById('editDHId')?.value?`<button type="button" onclick="openPhanBoNhanHang(document.getElementById('editDHId').value,${currentDetailDHItems.indexOf(item)})" class="ml-1 text-indigo-600 hover:text-indigo-800" title="Phân bổ"><i class="fa-solid fa-diagram-project"></i></button>`:'');
+    return `<div>${badges||'<span class="text-slate-400">Chưa phân bổ</span>'}${btn}<div class="text-[10px] text-slate-500 mt-1">${bizEsc(s.status)}</div></div>`;
+  }
+  window.renderTableDetailDatHang=function(isReadOnly){
+    const tbody=document.getElementById('tbDetailDatHang'); if(!tbody)return; prepareDHItems();
+    if(!currentDetailDHItems.length){tbody.innerHTML='<tr><td colspan="10" class="p-6 text-center text-slate-400">Vui lòng chọn Phiếu Duyệt để hiển thị danh sách sản phẩm.</td></tr>';document.getElementById('lblTotalSLDatHangModal').innerText='0';return;}
+    let total=0;
+    tbody.innerHTML=currentDetailDHItems.map((item,idx)=>{total+=Number(item.slDat||0);return `<tr class="border-b hover:bg-slate-50"><td class="p-2 border-r text-center">${idx+1}</td><td class="p-2 border-r text-center"><input type="date" value="${item.ngayGiao||''}" ${isReadOnly?'disabled':''} onchange="currentDetailDHItems[${idx}].ngayGiao=this.value" class="border rounded px-2 py-1"></td><td class="p-2 border-r text-center"><input type="date" value="${item.ngayNhan||''}" ${isReadOnly?'disabled':''} onchange="currentDetailDHItems[${idx}].ngayNhan=this.value" class="border rounded px-2 py-1"></td><td class="p-2 border-r font-mono font-bold text-purple-700">${bizEsc(item.ma)}</td><td class="p-2 border-r">${bizEsc(item.thuongHieu||'-')}</td><td class="p-2 border-r font-bold">${bizEsc(item.ten)}</td><td class="p-2 border-r text-center">${bizEsc(item.dvt||'-')}</td><td class="p-2 border-r text-center font-mono font-bold text-indigo-700">${item.slDat}</td><td class="p-2 border-r min-w-[230px]">${document.getElementById('editDHId')?.value?dhAllocSummaryHtml(item,isReadOnly):'<span class="text-slate-400 text-[11px]">Sau khi lưu phiếu mới phân bổ</span>'}</td><td class="p-2"><input type="text" value="${bizEsc(item.ghiChu||'')}" ${isReadOnly?'readonly':''} onchange="currentDetailDHItems[${idx}].ghiChu=this.value" class="w-full border rounded px-2 py-1"></td></tr>`;}).join('');
+    document.getElementById('lblTotalSLDatHangModal').innerText=String(total);
+  };
+
+  // Nút Phân bổ ngay trên danh sách Phiếu Đặt Hàng.
+  const _oldRenderDHView=window.renderDatHangView;
+  function addMainDHAllocationButtons(){
+    if(!canAllocateBiz())return;
+    const body=document.getElementById('tbDatHangBody'); if(!body)return;
+    const start=document.getElementById('filterDHStartDate')?.value||'', end=document.getElementById('filterDHEndDate')?.value||'', key=(document.getElementById('filterDHSearch')?.value||'').toLowerCase().trim();
+    let arr=[...listPhieuDatHang].sort((a,b)=>{const d=new Date(b.ngayLap)-new Date(a.ngayLap);return d||String(b.ma||'').localeCompare(String(a.ma||''),undefined,{numeric:true});});
+    arr=arr.filter(p => (!start || p.ngayLap>=start) && (!end || p.ngayLap<=end) && (!key || [p.ma,p.phieuDuyetMa,p.phieuDeXuatMa,p.nguoiLap,p.ghiChu,calcTrangThaiDatHang(p)].join(' ').toLowerCase().includes(key)));
+    arr=sliceDataByPageSize(arr,pageSizeDH);
+    [...body.children].forEach((tr,i)=>{const p=arr[i];if(!p)return;const cell=tr.lastElementChild;if(!cell||cell.querySelector('[data-qldh-alloc-btn]'))return;const s=p.items.reduce((x,it)=>x+allocationStats(it).assigned,0),t=p.items.reduce((x,it)=>x+Number(it.slDat||0),0);cell.insertAdjacentHTML('beforeend',`<button data-qldh-alloc-btn onclick="openPhanBoNhanHang('${bizEsc(p.id)}',0)" class="ml-2 ${s===t&&t>0?'text-emerald-600':'text-indigo-600'} hover:text-indigo-800" title="Phân bổ hình thức nhận hàng"><i class="fa-solid fa-diagram-project"></i></button>`);});
+  }
+  window.renderDatHangView=function(){_oldRenderDHView.apply(this,arguments);setTimeout(addMainDHAllocationButtons,0);};
+  const _oldFilterDH=window.filterDatHangTable;
+  window.filterDatHangTable=function(){_oldFilterDH.apply(this,arguments);setTimeout(addMainDHAllocationButtons,0);};
+
+  // ===== Theo Tiến Độ: nhận/trả/hủy theo từng allocation =====
+  function allocationLinesForDH(dh){
+    const out=[]; (dh.items||[]).forEach((item,idx)=>{ensureItemLineId(item);const arr=getAllocations(item,true);arr.forEach(a=>{const remain=Math.max(0,Number(a.sl||0)-Number(a.slNhan||0)+Number(a.slTra||0)-Number(a.slHuy||0));out.push({lineId:item.lineId,allocationId:a.id,ma:item.ma,thuongHieu:item.thuongHieu,ten:item.ten,dvt:item.dvt,hinhThucNhan:a.hinhThuc,ngayDuKienNhan:a.ngayDuKienNhan||item.ngayNhan||'',slDat:Number(a.sl||0),slDaNhan:Number(a.slNhan||0),slConLai:remain,slNhan:remain,slTra:Math.max(0,Number(a.slNhan||0)-Number(a.slTra||0)),slHuy:remain,ghiChu:a.ghiChu||'',_itemIndex:idx});});});return out;
+  }
+  const _wrappedSaveTD=window.handleSavePhieuTienDo;
+  function touchProgressSync(type){
+    if(typeof _wrappedSaveTD!=='function')return;
+    const typeEl=document.getElementById('editTDType'), sel=document.getElementById('selectTDPhieuDoiChieu'); if(!typeEl||!sel)return;
+    const oldType=typeEl.value, oldSel=sel.value; const oldConfirm=window.showCustomConfirm;
+    typeEl.value=type; sel.value=''; window.showCustomConfirm=function(){};
+    try{_wrappedSaveTD({preventDefault(){}});}catch(e){}
+    finally{window.showCustomConfirm=oldConfirm;typeEl.value=oldType;sel.value=oldSel;}
+  }
+  window.onSelectPhieuDoiChieuTD=function(targetId){
+    const type=document.getElementById('editTDType')?.value, today=new Date().toISOString().slice(0,10);
+    if(!targetId){currentDetailTDItems=[];renderTableDetailTienDo(false);return;}
+    ensureBizLineIds();
+    if(type==='nhanHang'||type==='huyHang'){
+      const dh=listPhieuDatHang.find(d=>d.id===targetId); if(!dh)return;
+      const lines=allocationLinesForDH(dh).filter(x=>x.slConLai>0);
+      currentDetailTDItems=lines.map(x=>type==='nhanHang'?({...x,ngayNhanTT:today,slNhan:x.slConLai,ghiChu:''}):({...x,slHuy:x.slConLai,ghiChu:''}));
+    }else if(type==='traHang'){
+      const pnh=listPhieuNhanHang.find(p=>p.id===targetId); if(!pnh)return;
+      currentDetailTDItems=(pnh.items||[]).map(i=>({...i,slCoTheTra:Math.max(0,Number(i.slNhan||0)-Number(i.slTra||0)),slTra:Math.max(0,Number(i.slNhan||0)-Number(i.slTra||0)),ghiChu:i.ghiChu||''})).filter(i=>i.slCoTheTra>0);
+    }
+    renderTableDetailTienDo(false);
+  };
+  window.renderTableDetailTienDo=function(isReadOnly){
+    const type=document.getElementById('editTDType')?.value, thead=document.getElementById('thDetailTienDo'),tbody=document.getElementById('tbDetailTienDo'),tfoot=document.getElementById('tfDetailTienDo'); if(!tbody||!thead||!tfoot)return;
+    if(type==='nhanHang'){
+      thead.innerHTML='<tr><th class="p-2 border-r">STT</th><th class="p-2 border-r">Ngày nhận *</th><th class="p-2 border-r">Mã SP</th><th class="p-2 border-r">Tên SP</th><th class="p-2 border-r">Hình thức nhận</th><th class="p-2 border-r">SL Phân bổ</th><th class="p-2 border-r">SL Đã nhận</th><th class="p-2 border-r">SL Nhận *</th><th class="p-2 border-r">SL Còn lại</th><th class="p-2">Ghi chú</th></tr>';
+      let a=0,b=0,c=0,d=0; tbody.innerHTML=currentDetailTDItems.map((x,i)=>{a+=x.slDat;b+=x.slDaNhan;c+=x.slNhan;d+=x.slConLai;const disabled=x.hinhThucNhan==='Chưa phân bổ';return `<tr class="border-b"><td class="p-2 border-r text-center">${i+1}</td><td class="p-2 border-r"><input type="date" value="${x.ngayNhanTT||''}" ${isReadOnly||disabled?'disabled':''} onchange="currentDetailTDItems[${i}].ngayNhanTT=this.value" class="border rounded px-2 py-1"></td><td class="p-2 border-r font-mono font-bold">${bizEsc(x.ma)}</td><td class="p-2 border-r font-bold">${bizEsc(x.ten)}</td><td class="p-2 border-r"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${x.hinhThucNhan==='Nhận tại kho'?'bg-sky-100 text-sky-700':x.hinhThucNhan==='Nhận tại cảng'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${bizEsc(x.hinhThucNhan)}</span></td><td class="p-2 border-r text-center font-mono">${x.slDat}</td><td class="p-2 border-r text-center font-mono text-emerald-700">${x.slDaNhan}</td><td class="p-2 border-r text-center"><input type="number" min="0" max="${x.slConLai}" value="${disabled?0:x.slNhan}" ${isReadOnly||disabled?'readonly':''} onchange="updateTDItemSL(${i},this.value,${x.slConLai})" class="w-20 border rounded px-2 py-1 text-center font-mono font-bold text-sky-700"></td><td class="p-2 border-r text-center font-mono font-bold text-amber-700">${x.slConLai}</td><td class="p-2"><input type="text" value="${bizEsc(x.ghiChu||'')}" ${isReadOnly?'readonly':''} onchange="currentDetailTDItems[${i}].ghiChu=this.value" class="w-full border rounded px-2 py-1"></td></tr>`;}).join('');
+      tfoot.innerHTML=`<tr><td colspan="5" class="p-2 text-right">TỔNG:</td><td class="p-2 text-center">${a}</td><td class="p-2 text-center text-emerald-700">${b}</td><td class="p-2 text-center text-sky-700">${c}</td><td class="p-2 text-center text-amber-700">${d}</td><td></td></tr>`;
+    }else if(type==='traHang'){
+      thead.innerHTML='<tr><th class="p-2 border-r">STT</th><th class="p-2 border-r">Mã SP</th><th class="p-2 border-r">Tên SP</th><th class="p-2 border-r">Hình thức nhận</th><th class="p-2 border-r">SL đã nhận</th><th class="p-2 border-r">SL có thể trả</th><th class="p-2 border-r">SL trả *</th><th class="p-2">Ghi chú</th></tr>';
+      let a=0,b=0; tbody.innerHTML=currentDetailTDItems.map((x,i)=>{a+=Number(x.slCoTheTra||0);b+=Number(x.slTra||0);return `<tr class="border-b"><td class="p-2 border-r text-center">${i+1}</td><td class="p-2 border-r font-mono font-bold">${bizEsc(x.ma)}</td><td class="p-2 border-r font-bold">${bizEsc(x.ten)}</td><td class="p-2 border-r"><span class="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">${bizEsc(x.hinhThucNhan||'Chưa phân bổ')}</span></td><td class="p-2 border-r text-center font-mono text-emerald-700">${x.slNhan||0}</td><td class="p-2 border-r text-center font-mono">${x.slCoTheTra}</td><td class="p-2 border-r text-center"><input type="number" min="0" max="${x.slCoTheTra}" value="${x.slTra}" ${isReadOnly?'readonly':''} onchange="updateTDItemSL(${i},this.value,${x.slCoTheTra})" class="w-20 border rounded px-2 py-1 text-center font-mono font-bold text-amber-700"></td><td class="p-2"><input type="text" value="${bizEsc(x.ghiChu||'')}" ${isReadOnly?'readonly':''} onchange="currentDetailTDItems[${i}].ghiChu=this.value" class="w-full border rounded px-2 py-1"></td></tr>`;}).join('');
+      tfoot.innerHTML=`<tr><td colspan="5" class="p-2 text-right">TỔNG:</td><td class="p-2 text-center">${a}</td><td class="p-2 text-center text-amber-700">${b}</td><td></td></tr>`;
+    }else{
+      thead.innerHTML='<tr><th class="p-2 border-r">STT</th><th class="p-2 border-r">Mã SP</th><th class="p-2 border-r">Tên SP</th><th class="p-2 border-r">Hình thức nhận</th><th class="p-2 border-r">SL Phân bổ</th><th class="p-2 border-r">SL Còn lại</th><th class="p-2 border-r">SL Hủy *</th><th class="p-2">Ghi chú</th></tr>';
+      let a=0,b=0,c=0; tbody.innerHTML=currentDetailTDItems.map((x,i)=>{a+=Number(x.slDat||0);b+=Number(x.slConLai||0);c+=Number(x.slHuy||0);return `<tr class="border-b"><td class="p-2 border-r text-center">${i+1}</td><td class="p-2 border-r font-mono font-bold">${bizEsc(x.ma)}</td><td class="p-2 border-r font-bold">${bizEsc(x.ten)}</td><td class="p-2 border-r"><span class="px-2 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">${bizEsc(x.hinhThucNhan||'Chưa phân bổ')}</span></td><td class="p-2 border-r text-center font-mono">${x.slDat}</td><td class="p-2 border-r text-center font-mono text-amber-700">${x.slConLai}</td><td class="p-2 border-r text-center"><input type="number" min="0" max="${x.slConLai}" value="${x.slHuy}" ${isReadOnly?'readonly':''} onchange="updateTDItemSL(${i},this.value,${x.slConLai})" class="w-20 border rounded px-2 py-1 text-center font-mono font-bold text-rose-700"></td><td class="p-2"><input type="text" value="${bizEsc(x.ghiChu||'')}" ${isReadOnly?'readonly':''} onchange="currentDetailTDItems[${i}].ghiChu=this.value" class="w-full border rounded px-2 py-1"></td></tr>`;}).join('');
+      tfoot.innerHTML=`<tr><td colspan="4" class="p-2 text-right">TỔNG:</td><td class="p-2 text-center">${a}</td><td class="p-2 text-center">${b}</td><td class="p-2 text-center text-rose-700">${c}</td><td></td></tr>`;
+    }
+  };
+  window.handleSavePhieuTienDo=function(e){
+    e.preventDefault(); const type=document.getElementById('editTDType')?.value, doiChieuId=document.getElementById('selectTDPhieuDoiChieu')?.value; if(!doiChieuId)return showCustomConfirm('Vui lòng chọn Phiếu Đối Chiếu.','Cảnh Báo');
+    const col={nhanHang:'slNhan',traHang:'slTra',huyHang:'slHuy'}[type], valid=(currentDetailTDItems||[]).filter(i=>Number(i[col]||0)>0); if(!valid.length)return showCustomConfirm('Số lượng phải lớn hơn 0.','Cảnh Báo');
+    const ma=document.getElementById('inputTDMa').value, ngayLap=document.getElementById('inputTDNgayLap').value, nguoiLap=document.getElementById('inputTDNguoiLap').value, ghiChu=document.getElementById('inputTDGhiChu').value.trim();
+    let dh=null,pnh=null;
+    if(type==='nhanHang'||type==='huyHang')dh=listPhieuDatHang.find(d=>d.id===doiChieuId); else pnh=listPhieuNhanHang.find(p=>p.id===doiChieuId),dh=pnh?listPhieuDatHang.find(d=>d.ma===pnh.phieuDoiChieuMa):null;
+    if(!dh)return showCustomConfirm('Không tìm thấy Phiếu Đặt Hàng liên quan.','Lỗi');
+    (dh.items||[]).forEach(i=>{ensureItemLineId(i);getAllocations(i,true);});
+    valid.forEach(v=>{
+      const item=dh.items.find(i=>i.lineId===v.lineId) || dh.items.find(i=>i.ma===v.ma);
+      if(!item)return;
+      const arr=getAllocations(item,true), a=arr.find(x=>x.id===v.allocationId) || arr.find(x=>x.hinhThuc===(v.hinhThucNhan||'')) || arr[0]; if(!a)return;
+      const q=Number(v[col]||0);
+      if(type==='nhanHang')a.slNhan=(Number(a.slNhan)||0)+q;
+      if(type==='traHang')a.slTra=(Number(a.slTra)||0)+q;
+      if(type==='huyHang')a.slHuy=(Number(a.slHuy)||0)+q;
+      syncItemTotalsFromAlloc(item);
+    });
+    const obj={id:ma,ma,ngayLap,nguoiLap,teamDeXuat:dh.teamDeXuat||'',ghiChu,items:JSON.parse(JSON.stringify(valid))};
+    if(type==='nhanHang')obj.phieuDoiChieuMa=dh.ma; if(type==='huyHang')obj.phieuDoiChieuMa=dh.ma; if(type==='traHang')obj.phieuDoiChieuMa=pnh?.ma||doiChieuId;
+    if(type==='nhanHang')listPhieuNhanHang.push(obj); else if(type==='traHang')listPhieuTraHang.push(obj); else listPhieuHuyHang.push(obj);
+    touchProgressSync(type);
+    closeModalPhieuTienDo(); renderTienDoSubTabContent();
+  };
+  const _oldDeleteTD=window.handleDeletePhieuTienDo;
+  window.handleDeletePhieuTienDo=function(type,pId){
+    if(!canAllocateBiz()) return (typeof _oldDeleteTD==='function'?_oldDeleteTD.apply(this,arguments):deny('Chỉ Chủ Sở Hữu hoặc Quản Trị được quyền xóa phiếu.'));
+    const map={nhanHang:listPhieuNhanHang,traHang:listPhieuTraHang,huyHang:listPhieuHuyHang}, list=map[type]||[], p=list.find(x=>x.id===pId); if(!p)return;
+    showCustomConfirm(`Bạn có chắc chắn muốn xóa phiếu "${p.ma}" không?`,'Xác Nhận Xóa Phiếu',function(){
+      let dh=null;
+      if(type==='nhanHang'||type==='huyHang')dh=listPhieuDatHang.find(d=>d.ma===p.phieuDoiChieuMa); else {const pnh=listPhieuNhanHang.find(x=>x.ma===p.phieuDoiChieuMa);dh=pnh?listPhieuDatHang.find(d=>d.ma===pnh.phieuDoiChieuMa):null;}
+      if(dh)(p.items||[]).forEach(v=>{const item=dh.items.find(i=>i.lineId===v.lineId)||dh.items.find(i=>i.ma===v.ma);const a=item?getAllocations(item,true).find(x=>x.id===v.allocationId):null;if(!a)return;const q=Number(v[{nhanHang:'slNhan',traHang:'slTra',huyHang:'slHuy'}[type]]||0);a[{nhanHang:'slNhan',traHang:'slTra',huyHang:'slHuy'}[type]]=Math.max(0,Number(a[{nhanHang:'slNhan',traHang:'slTra',huyHang:'slHuy'}[type]]||0)-q);syncItemTotalsFromAlloc(item);});
+      if(type==='nhanHang')listPhieuNhanHang=list.filter(x=>x.id!==pId); else if(type==='traHang')listPhieuTraHang=list.filter(x=>x.id!==pId); else listPhieuHuyHang=list.filter(x=>x.id!==pId);
+      touchProgressSync(type); renderTienDoSubTabContent();
+    });
+  };
+
+  // ===== Báo cáo chi tiết theo hình thức nhận =====
+  window.renderBaoCaoChiTietView=function(){
+    const c=document.getElementById('mainContentArea');if(!c)return;const today=new Date().toISOString().slice(0,10),first=`${new Date().getFullYear()}-01-01`;
+    c.innerHTML=`<div class="space-y-4"><div id="bcAllocCards" class="space-y-3"></div><div class="bg-white p-5 rounded-xl border shadow-sm space-y-4"><div class="flex flex-wrap gap-3 items-end border-b pb-3"><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Từ ngày</label><input type="date" id="filterBCCTStartDate" value="${first}" onchange="filterBaoCaoChiTiet()" class="border rounded-lg px-2.5 py-1.5"></div><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Đến ngày</label><input type="date" id="filterBCCTEndDate" value="${today}" onchange="filterBaoCaoChiTiet()" class="border rounded-lg px-2.5 py-1.5"></div><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Hình thức nhận</label><select id="filterBCCTHinhThuc" onchange="filterBaoCaoChiTiet()" class="border rounded-lg px-2.5 py-1.5"><option value="">Tất cả</option>${ALLOC_TYPES.map(x=>`<option value="${bizEsc(x)}">${bizEsc(x)}</option>`).join('')}</select></div><div class="relative flex-1 min-w-[240px]"><i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i><input type="text" id="filterBCCTSearch" oninput="filterBaoCaoChiTiet()" placeholder="Tìm phiếu, mã SP, tên, team, CN/TN..." class="w-full border rounded-lg pl-8 pr-3 py-1.5 text-xs"></div></div><div class="overflow-x-auto border rounded-lg max-h-[520px] custom-scrollbar"><table class="w-full text-left border-collapse text-xs"><thead class="bg-slate-50 sticky-thead"><tr><th class="p-2 border-r">STT</th><th class="p-2 border-r">Ngày đặt</th><th class="p-2 border-r">Phiếu đặt</th><th class="p-2 border-r">Mã SP</th><th class="p-2 border-r">Tên SP</th><th class="p-2 border-r">ĐVT</th><th class="p-2 border-r">Hình thức nhận</th><th class="p-2 border-r">SL Đặt</th><th class="p-2 border-r">SL Phân bổ</th><th class="p-2 border-r">SL Nhận</th><th class="p-2 border-r">SL Trả</th><th class="p-2 border-r">SL Hủy</th><th class="p-2">SL Còn</th></tr></thead><tbody id="tbBaoCaoChiTietBody"></tbody><tfoot id="tfBaoCaoChiTietFoot" class="bg-rose-50 font-bold"></tfoot></table></div></div></div>`;
+    filterBaoCaoChiTiet();
+  };
+  window.filterBaoCaoChiTiet=function(){
+    syncAllocTypesFromMaster();
+    const body=document.getElementById('tbBaoCaoChiTietBody');if(!body)return;
+    const sd=document.getElementById('filterBCCTStartDate')?.value||'';
+    const ed=document.getElementById('filterBCCTEndDate')?.value||'';
+    const ht=document.getElementById('filterBCCTHinhThuc')?.value||'';
+    const key=(document.getElementById('filterBCCTSearch')?.value||'').toLowerCase().trim();
+    ensureBizLineIds();
+    const rows=[];
+    (listPhieuDatHang||[]).forEach(dh=>{
+      (dh.items||[]).forEach(item=>{
+        const arr=getAllocations(item,true), originalTotal=Number(item.slDat||0);
+        arr.forEach((a,j)=>{
+          const txt=[dh.ma,dh.nguoiLap,dh.teamDeXuat,item.ma,item.ten,item.thuongHieu,a.hinhThuc].join(' ').toLowerCase();
+          if((sd&&((dh.ngayLap||'')<sd))||(ed&&((dh.ngayLap||'')>ed))||(ht&&a.hinhThuc!==ht)||(key&&!txt.includes(key))) return;
+          const isFirst=j===0;
+          rows.push({ngay:dh.ngayLap||'',phieu:dh.ma||'',ma:item.ma||'',ten:item.ten||'',dvt:item.dvt||'',ht:a.hinhThuc,dat:isFirst?originalTotal:0,phanBo:Number(a.sl||0),nhan:Number(a.slNhan||0),tra:Number(a.slTra||0),huy:Number(a.slHuy||0),con:Math.max(0,Number(a.sl||0)-Number(a.slNhan||0)+Number(a.slTra||0)-Number(a.slHuy||0))});
+        });
+      });
+    });
+
+    const sumRows=k=>rows.reduce((s,r)=>s+Number(r[k]||0),0);
+    const totalDat=sumRows('dat');
+    const totalNhan=sumRows('nhan');
+    const totalTra=sumRows('tra');
+    const totalHuy=sumRows('huy');
+    const totalNhanCN=rows.filter(r=>r.ht==='CN').reduce((s,r)=>s+Number(r.nhan||0),0);
+    const totalNhanTN=rows.filter(r=>r.ht==='TN').reduce((s,r)=>s+Number(r.nhan||0),0);
+    // Chờ nhận chỉ tính các dòng đã được phân bổ vào CN/TN; hàng Chưa phân bổ
+    // tiếp tục được thể hiện theo trạng thái phân bổ và không gán nhầm vào CN/TN.
+    const totalChoCN=rows.filter(r=>r.ht==='CN').reduce((s,r)=>s+Number(r.con||0),0);
+    const totalChoTN=rows.filter(r=>r.ht==='TN').reduce((s,r)=>s+Number(r.con||0),0);
+    const totalCho=totalChoCN+totalChoTN;
+    const cards=document.getElementById('bcAllocCards');
+    if(cards){
+      cards.innerHTML=`
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-3">
+          <div class="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm min-h-[132px]">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-[10px] font-black text-indigo-500 uppercase tracking-wide">Tổng Số Lượng Đặt Hàng</div>
+                <div id="bcTotalDat" class="text-3xl font-black text-indigo-700 mt-3">${totalDat}</div>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-cart-shopping"></i></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm min-h-[132px] xl:col-span-1">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-truck"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-black text-emerald-600 uppercase tracking-wide">Tổng Số Lượng Nhận Hàng</div>
+                <div id="bcTotalNhan" class="text-3xl font-black text-emerald-700 mt-2">${totalNhan}</div>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-emerald-100 grid grid-cols-2 gap-2">
+              <div class="rounded-xl bg-sky-50 border border-sky-100 px-3 py-2">
+                <div class="text-[9px] font-bold text-sky-600 uppercase">Nhận CN</div>
+                <div id="bcTotalNhanCN" class="text-lg font-black text-sky-700 mt-0.5">${totalNhanCN}</div>
+              </div>
+              <div class="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2">
+                <div class="text-[9px] font-bold text-amber-600 uppercase">Nhận TN</div>
+                <div id="bcTotalNhanTN" class="text-lg font-black text-amber-700 mt-0.5">${totalNhanTN}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm min-h-[132px]">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-[10px] font-black text-amber-600 uppercase tracking-wide">Tổng Số Lượng Trả Hàng</div>
+                <div id="bcTotalTra" class="text-3xl font-black text-amber-700 mt-3">${totalTra}</div>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-rotate-left"></i></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm min-h-[132px]">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-[10px] font-black text-rose-600 uppercase tracking-wide">Tổng Số Lượng Hủy Hàng</div>
+                <div id="bcTotalHuy" class="text-3xl font-black text-rose-700 mt-3">${totalHuy}</div>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-xmark"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm xl:w-3/4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock"></i></div>
+              <div>
+                <div class="text-[10px] font-black text-sky-600 uppercase tracking-wide">Tổng Số Lượng Chờ Nhận</div>
+                <div id="bcTotalCho" class="text-3xl font-black text-sky-700 mt-1">${totalCho}</div>
+              </div>
+            </div>
+            <div class="flex gap-2 min-w-[320px] sm:min-w-[420px] sm:ml-auto">
+              <div class="flex-1 rounded-xl bg-sky-50 border border-sky-100 px-4 py-2.5">
+                <div class="text-[9px] font-bold text-sky-600 uppercase">Chờ nhận CN</div>
+                <div id="bcTotalChoCN" class="text-xl font-black text-sky-700 mt-0.5">${totalChoCN}</div>
+              </div>
+              <div class="flex-1 rounded-xl bg-amber-50 border border-amber-100 px-4 py-2.5">
+                <div class="text-[9px] font-bold text-amber-600 uppercase">Chờ nhận TN</div>
+                <div id="bcTotalChoTN" class="text-xl font-black text-amber-700 mt-0.5">${totalChoTN}</div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    if(!rows.length){
+      body.innerHTML='<tr><td colspan="13" class="p-8 text-center text-slate-400">Không có dữ liệu phù hợp.</td></tr>';
+      document.getElementById('tfBaoCaoChiTietFoot').innerHTML='';
+      return;
+    }
+    body.innerHTML=rows.map((r,i)=>`<tr class="border-b hover:bg-slate-50"><td class="p-2 border-r text-center">${i+1}</td><td class="p-2 border-r">${formatDateVN(r.ngay)}</td><td class="p-2 border-r font-mono font-bold">${bizEsc(r.phieu)}</td><td class="p-2 border-r font-mono">${bizEsc(r.ma)}</td><td class="p-2 border-r font-bold">${bizEsc(r.ten)}</td><td class="p-2 border-r text-center">${bizEsc(r.dvt)}</td><td class="p-2 border-r"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${r.ht===UNALLOCATED_TYPE?'bg-slate-100 text-slate-600':'bg-indigo-100 text-indigo-700'}">${bizEsc(r.ht)}</span></td><td class="p-2 border-r text-center font-mono">${r.dat}</td><td class="p-2 border-r text-center font-mono font-bold text-indigo-700">${r.phanBo}</td><td class="p-2 border-r text-center font-mono text-emerald-700">${r.nhan}</td><td class="p-2 border-r text-center font-mono text-amber-700">${r.tra}</td><td class="p-2 border-r text-center font-mono text-rose-700">${r.huy}</td><td class="p-2 text-center font-mono font-bold text-sky-700">${r.con}</td></tr>`).join('');
+    const sum=k=>rows.reduce((s,r)=>s+Number(r[k]||0),0);
+    document.getElementById('tfBaoCaoChiTietFoot').innerHTML=`<tr><td colspan="7" class="p-2 text-right border-r">TỔNG CỘNG:</td><td class="p-2 text-center border-r">${sum('dat')}</td><td class="p-2 text-center border-r text-indigo-700">${sum('phanBo')}</td><td class="p-2 text-center border-r text-emerald-700">${sum('nhan')}</td><td class="p-2 text-center border-r text-amber-700">${sum('tra')}</td><td class="p-2 text-center border-r text-rose-700">${sum('huy')}</td><td class="p-2 text-center text-sky-700">${sum('con')}</td></tr>`;
+  };
+
+  // Báo cáo dự kiến nhận hàng: thêm Hình thức nhận.
+  window.renderBaoCaoDuKienView=function(){
+    const c=document.getElementById('mainContentArea');if(!c)return;const today=new Date().toISOString().slice(0,10),first=`${new Date().getFullYear()}-01-01`;
+    c.innerHTML=`<div class="space-y-4">
+      <div id="bcDuKienSummary" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="rounded-2xl border bg-sky-50 border-sky-100 p-5 shadow-sm"><div class="flex items-center justify-between"><div><div class="text-[11px] font-black uppercase tracking-wide text-sky-600">Tổng đơn CN</div><div id="bcDuKienDonCN" class="text-3xl font-black text-sky-800 mt-1">0</div><div class="text-xs text-sky-700 mt-1">Tổng số lượng: <b id="bcDuKienSLCN">0</b></div></div><i class="fa-solid fa-warehouse text-3xl text-sky-300"></i></div></div>
+        <div class="rounded-2xl border bg-amber-50 border-amber-100 p-5 shadow-sm"><div class="flex items-center justify-between"><div><div class="text-[11px] font-black uppercase tracking-wide text-amber-600">Tổng đơn TN</div><div id="bcDuKienDonTN" class="text-3xl font-black text-amber-800 mt-1">0</div><div class="text-xs text-amber-700 mt-1">Tổng số lượng: <b id="bcDuKienSLTN">0</b></div></div><i class="fa-solid fa-ship text-3xl text-amber-300"></i></div></div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border shadow-sm space-y-4"><div class="flex flex-wrap gap-3 items-end border-b pb-3"><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Từ ngày</label><input type="date" id="filterBCDKStartDate" value="${first}" onchange="filterBaoCaoDuKien()" class="border rounded-lg px-2.5 py-1.5"></div><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Đến ngày</label><input type="date" id="filterBCDKEndDate" value="${today}" onchange="filterBaoCaoDuKien()" class="border rounded-lg px-2.5 py-1.5"></div><div><label class="block text-[10px] font-bold text-slate-500 mb-1">Hình thức nhận</label><select id="filterBCDKHinhThuc" onchange="filterBaoCaoDuKien()" class="border rounded-lg px-2.5 py-1.5"><option value="">Tất cả</option>${ALLOC_TYPES.map(x=>`<option value="${bizEsc(x)}">${bizEsc(x)}</option>`).join('')}</select></div><div class="relative flex-1 min-w-[240px]"><i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i><input type="text" id="filterBCDKSearch" oninput="filterBaoCaoDuKien()" placeholder="Phiếu, mã SP, tên..." class="w-full border rounded-lg pl-8 pr-3 py-1.5 text-xs"></div></div><div class="overflow-x-auto border rounded-lg max-h-[520px] custom-scrollbar"><table class="w-full text-left border-collapse text-xs"><thead class="bg-slate-50 sticky-thead"><tr><th class="p-2 border-r">STT</th><th class="p-2 border-r">Dự kiến nhận</th><th class="p-2 border-r">Phiếu đặt</th><th class="p-2 border-r">Mã SP</th><th class="p-2 border-r">Tên SP</th><th class="p-2 border-r">Hình thức nhận</th><th class="p-2 border-r">SL Phân bổ</th><th class="p-2 border-r">SL Đã nhận</th><th class="p-2">SL Còn</th></tr></thead><tbody id="tbBaoCaoDuKienBody"></tbody><tfoot id="tfBaoCaoDuKienFoot" class="bg-teal-50 font-bold"></tfoot></table></div></div></div>`;filterBaoCaoDuKien();
+  };
+  window.filterBaoCaoDuKien=function(){
+    const body=document.getElementById('tbBaoCaoDuKienBody');if(!body)return;const sd=document.getElementById('filterBCDKStartDate')?.value||'',ed=document.getElementById('filterBCDKEndDate')?.value||'',ht=document.getElementById('filterBCDKHinhThuc')?.value||'',key=(document.getElementById('filterBCDKSearch')?.value||'').toLowerCase().trim();ensureBizLineIds();const rows=[];
+    (listPhieuDatHang||[]).forEach(dh=>(dh.items||[]).forEach(item=>{const arr=getAllocations(item,true);arr.forEach(a=>{const ngay=a.ngayDuKienNhan||item.ngayNhan||'';const matchDate=(!sd||ngay>=sd)&&(!ed||ngay<=ed),txt=[dh.ma,dh.nguoiLap,dh.teamDeXuat,item.ma,item.ten,item.thuongHieu,item.dvt,a.hinhThuc,ngay,a.ghiChu].join(' ');if(!matchDate||(ht&&a.hinhThuc!==ht)||(key&&!window.qldhSmartIncludes(txt,key)))return;rows.push({dhId:dh.id||dh.ma,ngay,phieu:dh.ma,ma:item.ma,ten:item.ten,ht:a.hinhThuc,bo:Number(a.sl||0),nhan:Number(a.slNhan||0),con:Math.max(0,Number(a.sl||0)-Number(a.slNhan||0)+Number(a.slTra||0)-Number(a.slHuy||0))});});}));
+    const byType=(type)=>{const matched=rows.filter(r=>r.ht===type&&Number(r.bo||0)>0);const orders=new Set(matched.map(r=>r.dhId));return {orders:orders.size,qty:matched.reduce((s,r)=>s+Number(r.bo||0),0)};};
+    const cn=byType('CN'),tn=byType('TN');
+    document.getElementById('bcDuKienDonCN')?.replaceChildren(document.createTextNode(String(cn.orders)));
+    document.getElementById('bcDuKienSLCN')?.replaceChildren(document.createTextNode(String(cn.qty)));
+    document.getElementById('bcDuKienDonTN')?.replaceChildren(document.createTextNode(String(tn.orders)));
+    document.getElementById('bcDuKienSLTN')?.replaceChildren(document.createTextNode(String(tn.qty)));
+    if(!rows.length){body.innerHTML='<tr><td colspan="9" class="p-8 text-center text-slate-400">Không có dữ liệu phù hợp.</td></tr>';document.getElementById('tfBaoCaoDuKienFoot').innerHTML='';return;}
+    body.innerHTML=rows.map((r,i)=>`<tr class="border-b hover:bg-slate-50"><td class="p-2 border-r text-center">${i+1}</td><td class="p-2 border-r">${formatDateVN(r.ngay)}</td><td class="p-2 border-r font-mono font-bold">${bizEsc(r.phieu)}</td><td class="p-2 border-r font-mono">${bizEsc(r.ma)}</td><td class="p-2 border-r font-bold">${bizEsc(r.ten)}</td><td class="p-2 border-r"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${r.ht==='CN'?'bg-sky-100 text-sky-700':r.ht==='TN'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${bizEsc(r.ht)}</span></td><td class="p-2 border-r text-center font-mono font-bold">${r.bo}</td><td class="p-2 border-r text-center font-mono text-emerald-700">${r.nhan}</td><td class="p-2 text-center font-mono font-bold text-sky-700">${r.con}</td></tr>`).join('');
+    const s=k=>rows.reduce((x,r)=>x+Number(r[k]||0),0);document.getElementById('tfBaoCaoDuKienFoot').innerHTML=`<tr><td colspan="6" class="p-2 text-right border-r">TỔNG:</td><td class="p-2 text-center border-r">${s('bo')}</td><td class="p-2 text-center border-r text-emerald-700">${s('nhan')}</td><td class="p-2 text-center text-sky-700">${s('con')}</td></tr>`;
+  };
+
+  // Chuẩn hóa định kỳ để dữ liệu cũ cũng có lineId/allocation khi mở app.
+  ensureBizLineIds();
+  setTimeout(ensureBizLineIds,300); setTimeout(ensureBizLineIds,1500); setInterval(ensureBizLineIds,10000);
+})();
+
+</script>
+
+
+<!-- FINAL PATCH v16: MASTER DANH MỤC HÌNH THỨC NHẬN HÀNG -->
+<script>
+(function(){
+  'use strict';
+  const TAB_ID='tab_HTNH', UNALLOCATED='Chưa phân bổ';
+  const DEFAULTS=[
+    {id:'HTNH01',ma:'HTNH01',ten:'CN',ghiChu:'Hình thức nhận mặc định'},
+    {id:'HTNH02',ma:'HTNH02',ten:'TN',ghiChu:'Hình thức nhận mặc định'}
+  ];
+  function canManage(){
+    const r=String(window.currentUser?.phanQuyen||'').trim().toLowerCase();
+    return r==='chủ sở hữu'||r==='chủ sở hữu'.toLowerCase()||r==='quản trị'||r==='quan tri'||r==='chủ sở hữu';
+  }
+  function ensureTab(persist){
+    if(typeof danhMucTabs==='undefined'||!Array.isArray(danhMucTabs))return null;
+    let tab=danhMucTabs.find(t=>t&&t.id===TAB_ID);
+    if(!tab){
+      tab={id:TAB_ID,name:'Hình Thức Nhận Hàng',prefix:'HTNH',items:JSON.parse(JSON.stringify(DEFAULTS))};
+      danhMucTabs.push(tab);
+      if(persist)window.__qldhMarkDirty?.('danhMucTabs');
+    }else{
+      tab.name='Hình Thức Nhận Hàng';tab.prefix='HTNH';tab.items=Array.isArray(tab.items)?tab.items:[];
+      // Đổi tên mặc định cũ sang CN/TN nhưng không đụng vào tên do người dùng đã tùy chỉnh.
+      const legacyMap={HTNH01:{old:'Nhận tại kho',next:'CN'},HTNH02:{old:'Nhận tại cảng',next:'TN'}};
+      tab.items.forEach(it=>{const m=legacyMap[String(it.id||'')];if(m&&String(it.ten||'').trim()===m.old){it.ten=m.next;renameEverywhere(m.old,m.next,it.id);}});
+    }
+    return tab;
+  }
+  function allAllocContainers(){
+    return [window.listPhieuDatHang,window.listPhieuNhanHang,window.listPhieuTraHang,window.listPhieuHuyHang];
+  }
+  function renameEverywhere(oldName,newName,itemId){
+    if(!oldName||!newName||oldName===newName)return;
+    let changed={phieuDatHang:false,phieuNhanHang:false,phieuTraHang:false,phieuHuyHang:false};
+    const orders=window.listPhieuDatHang||[];
+    orders.forEach(dh=>(dh.items||[]).forEach(it=>{
+      (it.allocations||[]).forEach(a=>{
+        if(String(a.hinhThucId||'')===String(itemId)||String(a.hinhThuc||'').trim()===oldName){
+          a.hinhThucId=itemId;a.hinhThuc=newName;changed.phieuDatHang=true;
+        }
+      });
+    }));
+    (window.listPhieuNhanHang||[]).forEach(p=>(p.items||[]).forEach(it=>{
+      if(String(it.hinhThucNhan||'').trim()===oldName){it.hinhThucNhan=newName;it.hinhThucNhanId=itemId;changed.phieuNhanHang=true;}
+    }));
+    (window.listPhieuTraHang||[]).forEach(p=>(p.items||[]).forEach(it=>{
+      if(String(it.hinhThucNhan||'').trim()===oldName){it.hinhThucNhan=newName;it.hinhThucNhanId=itemId;changed.phieuTraHang=true;}
+    }));
+    (window.listPhieuHuyHang||[]).forEach(p=>(p.items||[]).forEach(it=>{
+      if(String(it.hinhThucNhan||'').trim()===oldName){it.hinhThucNhan=newName;it.hinhThucNhanId=itemId;changed.phieuHuyHang=true;}
+    }));
+    window.__qldhMarkDirty?.('danhMucTabs');
+    Object.keys(changed).forEach(k=>{if(changed[k])window.__qldhMarkDirty?.(k);});
+  }
+
+  // Đảm bảo tab luôn tồn tại khi Owner/Admin mở khu vực danh mục.
+  const oldRenderDM=window.renderDanhMucKhacView;
+  window.renderDanhMucKhacView=function(...args){
+    ensureTab(!!canManage());
+    return typeof oldRenderDM==='function'?oldRenderDM.apply(this,args):undefined;
+  };
+
+  // Sau khi thêm/sửa item, nếu đây là Hình Thức Nhận Hàng thì rename theo ID.
+  const oldSaveItem=window.handleSaveItem;
+  window.handleSaveItem=function(...args){
+    const tab=typeof danhMucTabs!=='undefined'&&Array.isArray(danhMucTabs)?danhMucTabs.find(t=>t&&t.id===TAB_ID):null;
+    if(tab){
+      const proposed=String(document.getElementById('inputItemTen')?.value||'').trim();
+      if(proposed&&proposed.toLowerCase()===UNALLOCATED.toLowerCase()){
+        notify('“Chưa phân bổ” là trạng thái hệ thống, không dùng làm tên Hình thức nhận hàng.','Thông Báo');
+        return;
+      }
+    }
+    const editId=document.getElementById('editItemId')?.value||'';
+    const before=tab?.items?.find(i=>String(i.id)===String(editId));
+    const oldName=String(before?.ten||'').trim();
+    const result=typeof oldSaveItem==='function'?oldSaveItem.apply(this,args):undefined;
+    const afterTab=typeof danhMucTabs!=='undefined'&&Array.isArray(danhMucTabs)?danhMucTabs.find(t=>t&&t.id===TAB_ID):null;
+    const after=afterTab?.items?.find(i=>String(i.id)===String(editId));
+    const newName=String(after?.ten||'').trim();
+    if(afterTab&&editId&&oldName&&newName&&oldName!==newName){
+      renameEverywhere(oldName,newName,after.id);
+    }
+    window.__qldhEnsureReceiptMethodTab?.(false);
+    window.__qldhSyncAllocTypes?.();
+    return result;
+  };
+
+  // Tạo mới/xem/sửa phân bổ và báo cáo luôn đọc danh mục hiện tại.
+  ['openPhanBoNhanHang','renderPhanBoNhanHangEditor','addAllocationRow','savePhanBoNhanHang','renderBaoCaoChiTietView','filterBaoCaoChiTiet','renderBaoCaoDuKienView','filterBaoCaoDuKien'].forEach(name=>{
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__qldhReceiptMasterWrapped)return;
+    const wrapped=function(...args){
+      ensureTab(false);
+      window.__qldhSyncAllocTypes?.();
+      return fn.apply(this,args);
+    };
+    wrapped.__qldhReceiptMasterWrapped=true;
+    window[name]=wrapped;
+  });
+
+  // Khi xóa một tên hình thức đã dùng, dữ liệu lịch sử vẫn giữ nguyên tên cũ.
+  // Dropdown khi mở lại phiếu sẽ tự bổ sung tên cũ như một lựa chọn tạm thời.
+  ensureTab(false);
+})();
+</script>
+
+<!-- FINAL PATCH v20: NGÀY DỰ KIẾN THEO DÒNG PHÂN BỔ + CN/TN + TỔNG HỢP BÁO CÁO DỰ KIẾN -->
+<!-- FINAL PATCH v25: GIỮ MODAL KHI ĐỒNG BỘ NỀN + ĐỊNH DẠNG SỐ LƯỢNG -->
+<script>
+(function(){
+  'use strict';
+
+  // Số lượng hiển thị theo chuẩn Việt Nam: 1000 -> 1.000, 12500 -> 12.500.
+  function qldhParseQty(text){
+    let s=String(text??'').trim().replace(/\s+/g,'');
+    if(!s) return null;
+    // Chỉ xử lý chuỗi thuần số; không đụng mã phiếu, ngày tháng hay text.
+    if(!/^-?(?:\d+(?:[.,]\d+)?|\d{1,3}(?:\.\d{3})+(?:,\d+)?)$/.test(s)) return null;
+    if(s.includes('.') && s.includes(',')) s=s.replace(/\./g,'').replace(',', '.');
+    else if(/^-?\d{1,3}(?:\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+    else if(s.includes(',')) s=s.replace(',', '.');
+    const n=Number(s);
+    return Number.isFinite(n)?n:null;
+  }
+
+  function qldhFmtQty(n){
+    return new Intl.NumberFormat('vi-VN',{maximumFractionDigits:2}).format(n);
+  }
+
+  function qldhHeaderIsQty(text){
+    const h=String(text||'').replace(/\s+/g,' ').trim().replace(/[*:]/g,'');
+    return /^(SL\b|Tổng SL\b|Số Lượng\b|Số Mặt Hàng\b|Tổng Số Lượng\b)/i.test(h)
+      || /\bSL\b/i.test(h);
+  }
+
+  function qldhFormatTable(table){
+    if(!table) return;
+    const thead=table.querySelector('thead');
+    const headerRow=thead?.querySelector('tr:first-child');
+    if(!headerRow) return;
+    const qtyIdx=[];
+    Array.from(headerRow.children).forEach((th,i)=>{
+      if(qldhHeaderIsQty(th.textContent)) qtyIdx.push(i);
+    });
+    if(!qtyIdx.length) return;
+
+    table.querySelectorAll('tbody tr, tfoot tr, thead tr[data-qldh-header-total="1"]').forEach(tr=>{
+      qtyIdx.forEach(i=>{
+        const td=tr.children[i];
+        if(!td) return;
+        // Không thay đổi input number đang dùng để nhập liệu.
+        if(td.querySelector('input,select,textarea,button')) return;
+        const n=qldhParseQty(td.textContent);
+        if(n===null) return;
+        const formatted=qldhFmtQty(n);
+        if(td.textContent.trim()!==formatted) td.textContent=formatted;
+      });
+    });
+  }
+
+  const KNOWN_QTY_IDS=[
+    'cardTDNhanSL','cardTDTraSL','cardTDHuySL',
+    'bcTotalDat','bcTotalNhan','bcTotalTra','bcTotalHuy','bcTotalCho',
+    'bcTotalNhanCN','bcTotalNhanTN','bcTotalChoCN','bcTotalChoTN','bcDuKienSLCN','bcDuKienSLTN',
+    'qldhAllocTotal'
+  ];
+
+  function qldhFormatKnownCards(){
+    KNOWN_QTY_IDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      const n=qldhParseQty(el.textContent);
+      if(n!==null){
+        const formatted=qldhFmtQty(n);
+        if(el.textContent.trim()!==formatted) el.textContent=formatted;
+      }
+    });
+  }
+
+  function qldhScan(){
+    document.querySelectorAll('#mainContentArea table, #modalDeXuat table, #modalDuyetDeXuat table, #modalDatHang table, #modalPhieuTienDo table').forEach(qldhFormatTable);
+    qldhFormatKnownCards();
+  }
+
+  const root=document.getElementById('appView')||document.body;
+  let qtyScanTimer=0;
+  const obs=new MutationObserver(()=>{
+    clearTimeout(qtyScanTimer);
+    qtyScanTimer=setTimeout(qldhScan,100);
+  });
+  obs.observe(root,{subtree:true,childList:true,characterData:true});
+  qldhScan();
+  [150,500,1000,2000].forEach(ms=>setTimeout(qldhScan,ms));
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+
+  // Tìm kiếm thông minh: không phân biệt hoa/thường, dấu tiếng Việt, và cho phép
+  // nhiều từ khóa; mỗi từ khóa có thể nằm ở một trường khác nhau.
+  function normalize(v){
+    return String(v ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[.,;:/\-_|]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  window.qldhSmartIncludes=function(haystack,query){
+    const h=normalize(haystack), q=normalize(query);
+    if(!q) return true;
+    return q.split(' ').filter(Boolean).every(term=>h.includes(term));
+  };
+
+  // Refresh mềm khi server có dữ liệu mới: chỉ cập nhật bảng/KPI của tab hiện tại,
+  // không dựng lại toàn bộ view và không đóng modal.
+  let softRefreshTimer=0;
+  window.__qldhSoftRefreshCurrentView=function(){
+    clearTimeout(softRefreshTimer);
+    softRefreshTimer=setTimeout(()=>{
+      try{
+        const v=window.currentView || currentView;
+        if(v==='deXuat') window.filterDeXuatTable?.();
+        else if(v==='duyetDeXuat') window.filterDuyetDeXuatTable?.();
+        else if(v==='datHang') window.filterDatHangTable?.();
+        else if(v==='tienDo') window.filterTienDoSubTable?.();
+        else if(v==='baoCaoChiTiet') window.filterBaoCaoChiTiet?.();
+        else if(v==='baoCaoDuKien') window.filterBaoCaoDuKien?.();
+        else if(v==='khaiBaoSanPham') window.filterSanPhamTable?.();
+        else if(v==='khaiBaoNhanVien') window.renderNhanVienView?.();
+        else if(v==='danhMucKhac') window.renderDanhMucKhacView?.();
+      }catch(e){ console.warn('SOFT REFRESH VIEW',e); }
+    },80);
+  };
+
+  // Observer cho format số lượng: chỉ chạy sau khi DOM ổn định một nhịp.
+  // Patch cũ vẫn tồn tại nhưng observer này không tạo thêm vòng lặp render.
+  window.__qldhSmartSearchReady=true;
+})();
+</script>
+
+<script>
+/* =========================================================
+   FINAL PATCH v29: EXCEL EXPORT ĐẸP + ĐÚNG BỘ LỌC TRÊN MÀN HÌNH
+   ========================================================= */
+(function(){
+  'use strict';
+  const EXCEL_THEME={
+    'Đề Xuất Đặt Hàng':{fill:'E0F2FE',text:'075985',title:'0369A1'},
+    'Duyệt Phiếu Đề Xuất':{fill:'F3E8FF',text:'6B21A8',title:'7E22CE'},
+    'Phiếu Đặt Hàng':{fill:'E0E7FF',text:'3730A3',title:'4338CA'},
+    'Theo Tiến Độ':{fill:'DCFCE7',text:'166534',title:'15803D'},
+    'Báo Cáo Chi Tiết':{fill:'FFE4E6',text:'9F1239',title:'BE123C'},
+    'Báo Cáo Dự Kiến':{fill:'CCFBF1',text:'115E59',title:'0F766E'},
+    'default':{fill:'E2E8F0',text:'334155',title:'334155'}
+  };
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const norm=v=>{try{const r=clean(v).toLowerCase();if(window.qldhNormalizeText)return window.qldhNormalizeText(r);return r.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');}catch(e){return clean(v).toLowerCase();}};
+  const val=id=>document.getElementById(id)?.value||'';
+  const smartIncludes=(hay,key)=>{if(!key)return true;if(typeof window.qldhSmartIncludes==='function')return window.qldhSmartIncludes(hay,key);const h=norm(hay);return norm(key).split(/\s+/).filter(Boolean).every(x=>h.includes(x));};
+  function dateLabel(a,b){const f=x=>x?x.split('-').reverse().join('/') : '';return a&&b?`Thời gian: ${f(a)} - ${f(b)}`:a?`Từ ngày: ${f(a)}`:b?`Đến ngày: ${f(b)}`:'Thời gian: Tất cả';}
+  function qldhGetExportRange(type){const ids={deXuat:['filterDXStartDate','filterDXEndDate'],duyetDeXuat:['filterDDXStartDate','filterDDXEndDate'],datHang:['filterDHStartDate','filterDHEndDate'],nhanHang:['filterTDStartDate','filterTDEndDate'],traHang:['filterTDStartDate','filterTDEndDate'],huyHang:['filterTDStartDate','filterTDEndDate']}[type];return ids?{start:val(ids[0]),end:val(ids[1])}:{start:'',end:''};}
+  function qldhGetReportExportRange(sheetName){return String(sheetName).toLowerCase().includes('dự kiến')?{start:val('filterBCDKStartDate'),end:val('filterBCDKEndDate')}:{start:val('filterBCCTStartDate'),end:val('filterBCCTEndDate')};}
+  window.qldhGetExportRange=qldhGetExportRange;window.qldhGetReportExportRange=qldhGetReportExportRange;
+  function ticketHay(p,type){
+    const ih=(p.items||[]).flatMap(i=>[i.ma,i.ten,i.thuongHieu,i.dvt,i.ngayNhan,i.ngayGiao,i.ghiChu,i.sl,i.slDuyet,i.slDat,i.slNhan,i.slTra,i.slHuy,i.trangThaiItem,i.hinhThuc,i.hinhThucNhan,...(Array.isArray(i.allocations)?i.allocations.flatMap(a=>[a.hinhThuc,a.ngayDuKienNhan,a.ghiChu,a.sl,a.slNhan,a.slTra,a.slHuy]):[])]);
+    let status='';try{if(type==='deXuat'&&typeof calcTrangThaiPhieu==='function')status=calcTrangThaiPhieu(p);if(type==='datHang'&&typeof calcTrangThaiDatHang==='function')status=calcTrangThaiDatHang(p);}catch(e){}
+    return [p.ma,p.phieuDeXuatMa,p.phieuDuyetMa,p.phieuDoiChieuMa,p.nguoiLap,p.nguoiDuyet,p.teamDeXuat,p.ngayLap,p.ngayDuyet,p.ghiChu,p.trangThaiDatHang,status,...ih].join(' ');
+  }
+  function qldhFilterExportTickets(type,source){
+    const list=Array.isArray(source)?source:[];const map={deXuat:['filterDXStartDate','filterDXEndDate','filterDXSearch','ngayLap'],duyetDeXuat:['filterDDXStartDate','filterDDXEndDate','filterDDXSearch','ngayDuyet'],datHang:['filterDHStartDate','filterDHEndDate','filterDHSearch','ngayLap'],nhanHang:['filterTDStartDate','filterTDEndDate','filterTDSearch','ngayLap'],traHang:['filterTDStartDate','filterTDEndDate','filterTDSearch','ngayLap'],huyHang:['filterTDStartDate','filterTDEndDate','filterTDSearch','ngayLap']}[type];
+    if(!map)return list;const [sid,eid,kid,dateKey]=map,start=val(sid),end=val(eid),key=val(kid).trim();return list.filter(p=>{const d=p?.[dateKey]||'';return(!start||d>=start)&&(!end||d<=end)&&(!key||smartIncludes(ticketHay(p,type),key));});
+  }
+  window.qldhFilterExportTickets=qldhFilterExportTickets;
+  const themeFor=title=>EXCEL_THEME[Object.keys(EXCEL_THEME).find(x=>x!=='default'&&String(title||'').includes(x))||'default'];
+  function colLetter(n){let s='';n++;while(n){const r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26);}return s;}
+  function shouldSumHeader(h){const t=clean(h).toLowerCase();if(!t||t==='stt')return false;return /\bsl\b|^sl\s|số lượng|số mặt hàng|tổng sl|tổng số lượng|số đơn/.test(t);}
+  function qldhPrettySheet(ws,title,dateText){
+    const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!aoa.length)return ws;const header=aoa[0]||[],data=aoa.slice(1),total=new Array(header.length).fill('');if(header.length)total[0]='TỔNG CỘNG:';
+    header.forEach((h,c)=>{if(shouldSumHeader(h))total[c]=data.reduce((s,row)=>s+(typeof row[c]==='number'?row[c]:(Number(String(row[c]||'').replace(/,/g,''))||0)),0);});
+    const out=[[title||'BÁO CÁO',''],[dateText||'', ''],header,...data,total],fresh=XLSX.utils.aoa_to_sheet(out);const lastCol=Math.max(0,header.length-1),totalRow=4+data.length;
+    fresh['!merges']=[{s:{r:0,c:0},e:{r:0,c:lastCol}},{s:{r:1,c:0},e:{r:1,c:lastCol}}];
+    fresh['!autofilter']={ref:`A3:${colLetter(lastCol)}${Math.max(3,2+data.length)}`};fresh['!freeze']={xSplit:0,ySplit:3,topLeftCell:'A4',activePane:'bottomRight',state:'frozen'};
+    fresh['!rows']=[];fresh['!rows'][0]={hpt:25};fresh['!rows'][1]={hpt:20};fresh['!rows'][2]={hpt:29};fresh['!rows'][totalRow-1]={hpt:22};
+    const th=themeFor(title),border={top:{style:'thin',color:{rgb:'E2E8F0'}},bottom:{style:'thin',color:{rgb:'E2E8F0'}},left:{style:'thin',color:{rgb:'E2E8F0'}},right:{style:'thin',color:{rgb:'E2E8F0'}}};
+    const titleStyle={font:{bold:true,color:{rgb:'FFFFFF'},sz:16},fill:{fgColor:{rgb:th.title}},alignment:{horizontal:'center',vertical:'center'}};
+    const subStyle={font:{italic:true,color:{rgb:'475569'},sz:10},fill:{fgColor:{rgb:'F8FAFC'}},alignment:{horizontal:'center',vertical:'center'}};
+    const headStyle={font:{bold:true,color:{rgb:th.text}},fill:{fgColor:{rgb:th.fill}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border};
+    const bodyStyle={alignment:{vertical:'top',wrapText:true},border};const totalStyle={font:{bold:true,color:{rgb:th.text}},fill:{fgColor:{rgb:'F1F5F9'}},alignment:{vertical:'center',wrapText:true},border:{...border,top:{style:'medium',color:{rgb:'94A3B8'}}}};
+    for(let c=0;c<header.length;c++){fresh[XLSX.utils.encode_cell({r:0,c})]&&(fresh[XLSX.utils.encode_cell({r:0,c})].s=titleStyle);fresh[XLSX.utils.encode_cell({r:1,c})]&&(fresh[XLSX.utils.encode_cell({r:1,c})].s=subStyle);fresh[XLSX.utils.encode_cell({r:2,c})]&&(fresh[XLSX.utils.encode_cell({r:2,c})].s=headStyle);for(let r=3;r<3+data.length;r++){const ce=fresh[XLSX.utils.encode_cell({r,c})];if(ce)ce.s=bodyStyle;}const te=fresh[XLSX.utils.encode_cell({r:totalRow-1,c})];if(te)te.s=totalStyle;}
+    header.forEach((h,c)=>{if(shouldSumHeader(h)){for(let r=3;r<totalRow;r++){const ce=fresh[XLSX.utils.encode_cell({r,c})];if(ce&&typeof ce.v==='number')ce.s={...(ce.s||{}),numFmt:'#,##0',alignment:{horizontal:'right',vertical:'top'}};}const te=fresh[XLSX.utils.encode_cell({r:totalRow-1,c})];if(te)te.s={...(te.s||{}),numFmt:'#,##0',alignment:{horizontal:'right',vertical:'center'}};}});
+    fresh['!cols']=header.map((h,c)=>{let m=clean(h).length||1;for(const row of data)m=Math.max(m,clean(row[c]).length||1);const t=clean(h).toLowerCase();let min=8,max=38;if(t==='stt'){min=5;max=7;}else if(t.includes('ngày')){min=13;max=16;}else if(t.includes('ghi chú')){min=14;max=55;}else if(t.includes('tên sản phẩm')){min=18;max=40;}else if(t.includes('team')){min=16;max=28;}else if(shouldSumHeader(h)){min=10;max=16;}return{wch:Math.min(max,Math.max(min,m+2))};});
+    return fresh;
+  }
+  const originalWrite=XLSX.writeFile;if(!originalWrite.__qldhV29Wrapped){const wrapped=function(wb,filename,opts){try{const meta=wb?.__qldhExportMeta;if(meta&&wb.SheetNames){const subtitle=dateLabel(meta.start,meta.end);wb.SheetNames.forEach(name=>{const title=name.startsWith('Danh Sách Phiếu')?(meta.title||name):name==='Danh Sách Chi Tiết'?`CHI TIẾT - ${meta.title||'Báo Cáo'}`:(meta.title||name);wb.Sheets[name]=qldhPrettySheet(wb.Sheets[name],title,subtitle);});delete wb.__qldhExportMeta;}}catch(e){console.warn('qldh Excel formatting:',e);}return originalWrite.call(this,wb,filename,opts);};wrapped.__qldhV29Wrapped=true;XLSX.writeFile=wrapped;}
+})();
+</script>
+\n
+
+<!-- FINAL PATCH v46: GIAO DIỆN BẢNG + TỔNG CỘNG MỘT CƠ CHẾ DUY NHẤT -->
+<style id="qldh-v46-style">
+/* V46: không animate/transition màu bảng, đặc biệt cột Team Đề Xuất */
+.qldh-v46-table thead,
+.qldh-v46-table thead th,
+.qldh-v46-table .qldh-v46-total-row,
+.qldh-v46-table .qldh-v46-total-row td,
+.qldh-v46-table .qldh-v46-team {
+  transition: none !important;
+  animation: none !important;
+}
+.qldh-v46-table thead th { font-weight: 700 !important; }
+.qldh-v46-table .qldh-v46-total-row {
+  position: sticky !important;
+  z-index: 25 !important;
+  font-weight: 800 !important;
+}
+.qldh-v46-table .qldh-v46-total-row td { font-weight: 800 !important; }
+</style>
+<script>
+(function(){
+  'use strict';
+
+  const CFG = {
+    deXuat: { body:'tbDeXuatBody', head:'#c7e7f7', total:'#eaf6fc', text:'#075985', border:'#0284c7' },
+    duyet:  { body:'tbDuyetDeXuatBody', head:'#e7d2fa', total:'#f6edff', text:'#6b21a8', border:'#9333ea' },
+    dat:    { body:'tbDatHangBody', head:'#cbd5fb', total:'#eef1ff', text:'#3730a3', border:'#4338ca' },
+    nhan:   { body:'tbTienDoSubBody', head:'#c7e8f7', total:'#eaf7fc', text:'#075985', border:'#0284c7' }
+  };
+
+  function progressTheme(){
+    const t = typeof currentTienDoTab === 'undefined' ? 'nhanHang' : currentTienDoTab;
+    if(t==='traHang') return {head:'#fde7a8', total:'#fff8dd', text:'#92400e', border:'#d97706'};
+    if(t==='huyHang') return {head:'#f8ccd4', total:'#fff0f3', text:'#9f1239', border:'#e11d48'};
+    return CFG.nhan;
+  }
+
+  function tableOf(bodyId){
+    const b=document.getElementById(bodyId);
+    return b ? b.closest('table') : null;
+  }
+
+  function numberFromText(v){
+    let s=String(v ?? '').trim().replace(/\s/g,'');
+    if(!s) return 0;
+    // Số hiển thị kiểu VN: 13.229 / 1.250.000 / 12,5
+    if(s.includes('.') && s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+    else if(s.includes('.')) s=s.replace(/\./g,'');
+    else if(s.includes(',')) s=s.replace(/,/g,'.');
+    const n=Number(s.replace(/[^0-9.-]/g,''));
+    return Number.isFinite(n)?n:0;
+  }
+
+  function fmt(n){
+    return new Intl.NumberFormat('vi-VN',{maximumFractionDigits:2,useGrouping:true}).format(Number(n)||0);
+  }
+
+  function isBadRow(tr){
+    const t=String(tr?.textContent||'').trim();
+    return !t || /Không tìm thấy|Không có dữ liệu|Chưa có dữ liệu|Vui lòng chọn/i.test(t);
+  }
+
+  function dataRows(body){
+    return Array.from(body?.children||[]).filter(tr=>
+      tr.tagName==='TR' &&
+      tr.dataset.qldhV46Total!=='1' &&
+      !tr.dataset.qldhTotal &&
+      !tr.hasAttribute('data-qldh-total') &&
+      !tr.hasAttribute('data-qldh-header-total') &&
+      !isBadRow(tr)
+    );
+  }
+
+  function getHeaders(table){
+    const row=table?.querySelector('thead tr:first-child');
+    return row ? Array.from(row.children) : [];
+  }
+
+  function headerText(th){
+    return String(th?.textContent||'').replace(/\s+/g,' ').trim().replace(/[*:]/g,'');
+  }
+
+  function applyTheme(table,theme){
+    if(!table) return;
+    table.classList.add('qldh-v46-table');
+    const head=table.querySelector('thead');
+    if(!head) return;
+    head.style.setProperty('background-color',theme.head,'important');
+    head.style.setProperty('color',theme.text,'important');
+    head.style.setProperty('border-bottom-color',theme.border,'important');
+    head.style.position='sticky';
+    head.style.top='0';
+    head.style.zIndex='40';
+    head.querySelectorAll('th').forEach(th=>{
+      // Không đặt màu riêng cho Team. Tất cả header dùng đúng một theme.
+      th.style.setProperty('background-color',theme.head,'important');
+      th.style.setProperty('color',theme.text,'important');
+      th.style.setProperty('border-bottom-color',theme.border,'important');
+      th.style.setProperty('transition','none','important');
+      th.style.setProperty('animation','none','important');
+      th.classList.add('qldh-v46-team');
+    });
+  }
+
+  function findHeaderIndex(headers, names){
+    const set=new Set(names);
+    return headers.findIndex(h=>set.has(headerText(h)));
+  }
+
+  function calcFor(kind, rows, headers){
+    const idx=name=>findHeaderIndex(headers,[name]);
+    const out={};
+    if(kind==='deXuat'){
+      out.mat=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Số Mặt Hàng')]?.textContent),0);
+      out.sl=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Tổng SL Đề Xuất')]?.textContent),0);
+    } else if(kind==='duyet'){
+      out.mat=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Số Mặt Hàng')]?.textContent),0);
+      out.sl=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Số Lượng Duyệt')]?.textContent),0);
+    } else if(kind==='dat'){
+      out.mat=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Số Mặt Hàng')]?.textContent),0);
+      for(const [k,h] of [['dat','SL Đặt'],['nhan','SL Nhận'],['tra','SL Trả'],['huy','SL Hủy'],['con','SL Còn Lại']])
+        out[k]=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx(h)]?.textContent),0);
+    } else {
+      out.mat=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx('Số Mặt Hàng')]?.textContent),0);
+      const h=typeof currentTienDoTab!=='undefined' && currentTienDoTab==='traHang'?'Tổng SL': 'Tổng SL';
+      out.sl=rows.reduce((s,tr)=>s+numberFromText(tr.children[idx(h)]?.textContent),0);
+    }
+    return out;
+  }
+
+  function totalCells(kind, headers, totals, theme){
+    const n=headers.length;
+    if(!n) return '';
+    let firstNumeric=kind==='dat'?findHeaderIndex(headers,['Số Mặt Hàng']):findHeaderIndex(headers,['Số Mặt Hàng']);
+    if(firstNumeric<1) firstNumeric=1;
+    const cells=[];
+    cells.push(`<td colspan="${firstNumeric}" class="p-2.5 text-right uppercase border-r" style="background:${theme.total}!important;color:${theme.text}!important">TỔNG CỘNG:</td>`);
+    for(let i=firstNumeric;i<n;i++){
+      const h=headerText(headers[i]);
+      let value=null;
+      if(kind==='deXuat' && h==='Số Mặt Hàng') value=totals.mat;
+      else if(kind==='deXuat' && h==='Tổng SL Đề Xuất') value=totals.sl;
+      else if(kind==='duyet' && h==='Số Mặt Hàng') value=totals.mat;
+      else if(kind==='duyet' && h==='Số Lượng Duyệt') value=totals.sl;
+      else if(kind==='dat' && h==='Số Mặt Hàng') value=totals.mat;
+      else if(kind==='dat' && h==='SL Đặt') value=totals.dat;
+      else if(kind==='dat' && h==='SL Nhận') value=totals.nhan;
+      else if(kind==='dat' && h==='SL Trả') value=totals.tra;
+      else if(kind==='dat' && h==='SL Hủy') value=totals.huy;
+      else if(kind==='dat' && h==='SL Còn Lại') value=totals.con;
+      else if(kind==='nhan' && h==='Số Mặt Hàng') value=totals.mat;
+      else if(kind==='nhan' && h==='Tổng SL') value=totals.sl;
+      const txt=value===null?'':fmt(value);
+      cells.push(`<td class="p-2.5 text-center border-r font-mono" style="background:${theme.total}!important;color:${theme.text}!important">${txt}</td>`);
+    }
+    return cells.join('');
+  }
+
+  function renderOne(kind,theme){
+    const body=document.getElementById(CFG[kind].body);
+    const table=body?.closest('table');
+    if(!body||!table) return;
+    applyTheme(table,theme);
+
+    // Xóa mọi tổng cũ của các patch trước; không xóa dữ liệu thật.
+    table.querySelectorAll('tr[data-qldh-total="1"],tr[data-qldh-header-total="1"],tr[data-qldh-v46-total="1"]').forEach(tr=>{
+      if(tr.closest('tbody')===body || tr.closest('thead')===table.querySelector('thead') || tr.dataset.qldhV46Total==='1') tr.remove();
+    });
+    table.querySelectorAll('tfoot').forEach(tf=>{ if(/TỔNG CỘNG|TỔNG:/i.test(tf.textContent||'')) tf.innerHTML=''; });
+
+    // Dọn toàn bộ tbody tổng của các phiên bản cũ trước khi tạo đúng 1 tbody tổng.
+    table.querySelectorAll('tbody[data-qldh-fixed-total="1"],tbody[data-qldh-v46-fixed="1"]').forEach(tb=>tb.remove());
+    const fixed=document.createElement('tbody');
+    fixed.dataset.qldhV46Fixed='1';
+    table.insertBefore(fixed,body);
+
+    const rows=dataRows(body);
+    const headers=getHeaders(table);
+    const totals=calcFor(kind,rows,headers);
+    const tr=document.createElement('tr');
+    tr.dataset.qldhV46Total='1';
+    tr.className='qldh-v46-total-row';
+    tr.style.setProperty('background-color',theme.total,'important');
+    tr.style.setProperty('color',theme.text,'important');
+    tr.style.setProperty('border-top','1px solid '+theme.border,'important');
+    tr.style.setProperty('border-bottom','1px solid '+theme.border,'important');
+    tr.style.setProperty('top',(table.querySelector('thead')?.getBoundingClientRect().height||0)+'px','important');
+    tr.innerHTML=totalCells(kind,headers,totals,theme);
+    fixed.appendChild(tr);
+  }
+
+  function renderAll(){
+    renderOne('deXuat',CFG.deXuat);
+    renderOne('duyet',CFG.duyet);
+    renderOne('dat',CFG.dat);
+    renderOne('nhan',progressTheme());
+  }
+
+  // Chỉ hook các hàm render/filter. Không MutationObserver toàn body => không còn vòng lặp đổi màu.
+  const hooks=['filterDeXuatTable','filterDuyetDeXuatTable','filterDatHangTable','filterTienDoSubTable','renderDeXuatView','renderDuyetDeXuatView','renderDatHangView','renderTienDoSubTabContent'];
+  hooks.forEach(name=>{
+    const old=window[name];
+    if(typeof old!=='function' || old.__qldhV46Wrapped) return;
+    const fn=function(){
+      const r=old.apply(this,arguments);
+      setTimeout(renderAll,0);
+      return r;
+    };
+    fn.__qldhV46Wrapped=true;
+    window[name]=fn;
+  });
+
+  // Một vài render đầu tiên sau khi boot, không chạy lặp liên tục.
+  [0,150,500,1000].forEach(ms=>setTimeout(renderAll,ms));
+  window.__qldhRenderTotalsV46=renderAll;
+})();
+</script>
+
+<!-- FINAL PATCH v47: ĐỒNG BỘ MÀU CỘT TEAM ĐỀ XUẤT, KHÔNG NHẤP NHÁY -->
+<style id="qldh-v47-team-style">
+/* Team Đề Xuất không có màu riêng; chỉ dùng màu của bảng hiện tại. */
+.qldh-v47-team-header,
+.qldh-v47-team-total,
+.qldh-v47-team-cell {
+  transition: none !important;
+  animation: none !important;
+}
+</style>
+<script>
+(function(){
+  'use strict';
+  function clean(v){ return String(v||'').replace(/\s+/g,' ').trim().toLowerCase(); }
+  function syncTeamColumn(table, theme){
+    if(!table || !theme) return;
+    const headRow=table.querySelector('thead tr:first-child');
+    if(!headRow) return;
+    const heads=Array.from(headRow.children);
+    const idx=heads.findIndex(th=>clean(th.textContent)==='team đề xuất');
+    if(idx<0) return;
+
+    const head=heads[idx];
+    head.classList.add('qldh-v47-team-header');
+    head.style.setProperty('background-color',theme.head,'important');
+    head.style.setProperty('color',theme.text,'important');
+    head.style.setProperty('border-bottom-color',theme.border,'important');
+    head.style.setProperty('border-top-color',theme.head,'important');
+    head.style.setProperty('transition','none','important');
+    head.style.setProperty('animation','none','important');
+
+    table.querySelectorAll('tbody tr').forEach(tr=>{
+      const total=tr.dataset.qldhV46Total==='1' || tr.dataset.qldhTotal==='1' || tr.dataset.qldhHeaderTotal==='1';
+      const cell=tr.children[idx];
+      if(!cell) return;
+      cell.classList.add(total?'qldh-v47-team-total':'qldh-v47-team-cell');
+      cell.style.setProperty('transition','none','important');
+      cell.style.setProperty('animation','none','important');
+      if(total){
+        cell.style.setProperty('background-color',theme.total,'important');
+        cell.style.setProperty('color',theme.text,'important');
+        cell.style.setProperty('border-bottom-color',theme.border,'important');
+        cell.style.setProperty('border-top-color',theme.border,'important');
+      }else{
+        /* Dòng dữ liệu giữ nền của bảng, không tô riêng cột Team. */
+        cell.style.removeProperty('background-color');
+        cell.style.removeProperty('color');
+        cell.style.removeProperty('border-bottom-color');
+      }
+    });
+  }
+
+  function run(){
+    const maps=[
+      ['tbDeXuatBody',{head:'#c7e7f7',total:'#eaf6fc',text:'#075985',border:'#0284c7'}],
+      ['tbDuyetDeXuatBody',{head:'#e7d2fa',total:'#f6edff',text:'#6b21a8',border:'#9333ea'}],
+      ['tbDatHangBody',{head:'#cbd5fb',total:'#eef1ff',text:'#3730a3',border:'#4338ca'}],
+      ['tbTienDoSubBody',null]
+    ];
+    maps.forEach(([id,theme])=>{
+      const table=document.getElementById(id)?.closest('table');
+      if(!table) return;
+      let t=theme;
+      if(!t){
+        const tab=typeof currentTienDoTab==='undefined'?'nhanHang':currentTienDoTab;
+        t=tab==='traHang'?{head:'#fde7a8',total:'#fff8dd',text:'#92400e',border:'#d97706'}:
+          tab==='huyHang'?{head:'#f8ccd4',total:'#fff0f3',text:'#9f1239',border:'#e11d48'}:
+          {head:'#c7e8f7',total:'#eaf7fc',text:'#075985',border:'#0284c7'};
+      }
+      syncTeamColumn(table,t);
+    });
+  }
+
+  const old=window.__qldhRenderTotalsV46;
+  if(typeof old==='function' && !old.__qldhV47Wrapped){
+    const wrapped=function(){
+      const r=old.apply(this,arguments);
+      /* Chạy sau khi hàng tổng đã dựng xong; không observer, không vòng lặp. */
+      requestAnimationFrame(run);
+      return r;
+    };
+    wrapped.__qldhV47Wrapped=true;
+    window.__qldhRenderTotalsV46=wrapped;
+  }
+
+  /* Chỉ chạy lúc khởi tạo và khi chuyển đúng các tab có render lại. */
+  [0,120,350,800].forEach(ms=>setTimeout(run,ms));
+})();
 </script>
